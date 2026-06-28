@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ぴこぴこ対位法機</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;600;700;800&family=Caveat:wght@700&display=swap');
+
+:root{
+  --case:#bdb6a3;
+  --case-dark:#938c79;
+  --case-light:#d6d0bd;
+  --bezel:#34322d;
+  --screen:#d6dec2;
+  --ink:#33421f;
+  --ink-dim:#5c6b41;
+  --red:#df5138;
+  --red-dark:#b53a26;
+  --yellow:#eebd3f;
+  --yellow-dark:#c99520;
+  --blue:#4a8fd1;
+  --blue-dark:#346baa;
+  --cream:#f1ecdc;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, #5b6b42, #3c4730);
+  font-family:'Baloo 2', sans-serif;
+  padding:28px 16px;
+}
+
+.device{
+  width:min(620px, 100%);
+  background: linear-gradient(165deg, var(--case-light), var(--case) 40%, var(--case-dark));
+  border-radius:26px;
+  padding:20px 20px 26px;
+  box-shadow:
+    0 14px 0 -4px var(--case-dark),
+    0 26px 34px rgba(0,0,0,0.35),
+    inset 0 2px 1px rgba(255,255,255,0.55);
+  position:relative;
+}
+
+.brand{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  padding:2px 8px 12px;
+}
+.brand h1{
+  margin:0;
+  font-weight:800;
+  font-size:21px;
+  color:#4a4434;
+  letter-spacing:0.5px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+.brand .model{
+  font-size:10.5px;
+  font-weight:700;
+  color:#857d65;
+  letter-spacing:0.5px;
+}
+
+.bezel{
+  background: var(--bezel);
+  border-radius:13px;
+  padding:14px 12px;
+  box-shadow:
+    inset 0 0 0 2px #1c1b18,
+    inset 0 7px 18px rgba(0,0,0,0.55);
+}
+
+.led-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 2px 9px;
+}
+.led{
+  width:8px; height:8px; border-radius:50%;
+  background:#4b5a33;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.6);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.led.on{
+  background:#a3ec68;
+  box-shadow: 0 0 7px 2px rgba(163,236,104,0.75), inset 0 0 2px rgba(0,0,0,0.3);
+}
+.led-label{
+  font-family:'Press Start 2P', monospace;
+  font-size:8.5px;
+  color:#8a9a6c;
+  letter-spacing:1px;
+}
+
+.screen{
+  background: var(--screen);
+  border-radius:5px;
+  padding:10px 8px 8px;
+  overflow:hidden;
+  box-shadow: inset 0 0 0 1px #00000022;
+}
+.screen svg{ width:100%; height:auto; display:block; }
+
+.evt.active ellipse,
+.evt.active rect,
+.evt.active path,
+.evt.active polygon,
+.evt.active text{
+  fill: var(--red) !important;
+  stroke: var(--red) !important;
+}
+
+.controls{ margin-top:17px; padding:0 6px; }
+
+.section-label{
+  font-family:'Press Start 2P', monospace;
+  font-size:9px;
+  color:#857d65;
+  letter-spacing:1.5px;
+  margin: 2px 0 6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.section-label::after{
+  content:"";
+  flex:1;
+  height:2px;
+  background: repeating-linear-gradient(90deg, #948c72 0 4px, transparent 4px 8px);
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.btn{
+  border:none;
+  cursor:pointer;
+  font-family:'Baloo 2', sans-serif;
+  font-weight:800;
+  font-size:13.5px;
+  color:#fff;
+  padding:13px 20px;
+  border-radius:999px;
+  letter-spacing:0.3px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.4);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+  flex:1;
+}
+.btn:active{ transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.25); }
+.btn.random{ background: linear-gradient(180deg, var(--blue), var(--blue-dark)); }
+.btn.play{ background: linear-gradient(180deg, var(--red), var(--red-dark)); }
+.btn.play.playing{ background: linear-gradient(180deg, var(--yellow), var(--yellow-dark)); color:#473c1a; }
+.btn.midi{ background: linear-gradient(180deg, #6fa566, #4d7d46); font-size:13px; }
+
+.field{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+.field label{ font-size:11px; font-weight:700; color:#5c5642; width:60px; flex-shrink:0; }
+.field select{
+  flex:1; min-width:0;
+  font-family:'Baloo 2', sans-serif;
+  font-weight:700;
+  font-size:12.5px;
+  color:#3f3a2c;
+  background: var(--cream);
+  border:2px solid #948c72;
+  border-radius:7px;
+  padding:5px 4px;
+}
+.ts-row{ display:flex; align-items:center; gap:8px; }
+.ts-row select{ width:54px; flex:none; text-align:center; }
+.ts-row .slash{ font-weight:800; color:#5c5642; }
+.ts-row .randoms{
+  display:flex; align-items:center; gap:5px; margin-left:auto;
+  font-size:10.5px; font-weight:700; color:#5c5642;
+}
+.ts-row .randoms input{ accent-color: var(--blue); width:15px; height:15px; }
+.field select:disabled{ opacity:0.5; }
+
+.sliders{ flex:1; display:flex; flex-direction:column; gap:11px; min-width:0; }
+.slider-line{ display:flex; align-items:center; gap:10px; }
+.slider-line label{
+  font-size:11px; font-weight:700; color:#5c5642; width:60px; flex-shrink:0;
+}
+.slider-line input[type=range]{
+  flex:1; accent-color: var(--red); height:18px;
+}
+.slider-line .val{
+  font-family:'Press Start 2P', monospace;
+  font-size:10px; color:#5c5642; width:44px; text-align:right; flex-shrink:0;
+}
+
+.voices{ display:flex; gap:7px; width:100%; }
+.voice-btn{
+  flex:1;
+  padding:7px 4px;
+  border-radius:8px;
+  border:2px solid #948c72;
+  background: var(--cream);
+  font-family:'Baloo 2', sans-serif;
+  font-weight:700;
+  font-size:11px;
+  color:#5c5642;
+  cursor:pointer;
+}
+.voice-btn.active{
+  background: var(--ink);
+  color: var(--screen);
+  border-color: var(--ink);
+}
+.voice-btn:disabled{ cursor:not-allowed; }
+
+.hint{
+  font-size:10.5px;
+  color:#857d65;
+  text-align:center;
+  margin-top:6px;
+  line-height:1.5;
+}
+.hint b{ color:#5c5642; }
+
+@media (max-width:380px){
+  .row{ flex-wrap:wrap; }
+  .field label{ width:auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="brand">
+    <h1>ぴこぴこ対位法機</h1>
+    <span class="model">MODEL PP-30</span>
+  </div>
+
+  <div class="bezel">
+    <div class="led-row">
+      <span class="led" id="led"></span>
+      <span class="led-label">PLAYING</span>
+    </div>
+    <div class="screen"><div id="staff"></div></div>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <button class="btn random" id="randomBtn">🎲 ランダム生成</button>
+      <button class="btn play" id="playBtn">▶ 再生</button>
+    </div>
+    <div class="row">
+      <button class="btn midi" id="midiBtn">💾 MIDIファイルを書き出す</button>
+    </div>
+
+    <div class="section-label" id="settingsToggle" style="cursor:pointer; user-select:none;">SETTINGS <span id="settingsArrow" style="order:2;">▾</span></div>
+    <div id="settingsBody">
+    <div class="row">
+      <div class="field" style="flex:1.3;">
+        <label>キー</label>
+        <select id="keySel"></select>
+      </div>
+      <div class="voices" id="keyModeRow" style="flex:1;">
+        <button class="voice-btn active" data-keymode="major">長調</button>
+        <button class="voice-btn" data-keymode="minor">短調</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="ts-row" style="width:100%;">
+        <span style="font-size:11px;font-weight:700;color:#5c5642;">拍子</span>
+        <select id="tsNum"></select>
+        <span class="slash">/</span>
+        <select id="tsDen">
+          <option value="2">2</option>
+          <option value="4" selected>4</option>
+          <option value="8">8</option>
+          <option value="16">16</option>
+        </select>
+        <label class="randoms"><input type="checkbox" id="cpChromatic"> クロマティック</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="ts-row" style="width:100%;">
+        <span style="font-size:11px;font-weight:700;color:#5c5642;">種</span>
+        <select id="cpSpecies" disabled>
+          <option value="1">1:1</option>
+          <option value="2">2:1</option>
+          <option value="4">4:1</option>
+          <option value="S4">4種</option>
+        </select>
+        <label class="randoms"><input type="checkbox" id="cpSpeciesRandom" checked> ランダム種</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="voices" id="cpPositionRow">
+        <button class="voice-btn active" data-pos="above">新声部を上に</button>
+        <button class="voice-btn" data-pos="below">新声部を下に</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="ts-row" style="width:100%;">
+        <label class="randoms" style="margin-left:0;"><input type="checkbox" id="cpBass"> + ベース声部(簡易・1:1のみ)(※β版)</label>
+      </div>
+    </div>
+    </div>
+
+    <div class="section-label">PLAYBACK</div>
+    <div class="row">
+      <div class="sliders">
+        <div class="slider-line">
+          <label>テンポ</label>
+          <input type="range" id="tempo" min="60" max="200" value="120">
+          <span class="val" id="tempoVal">120</span>
+        </div>
+        <div class="slider-line">
+          <label>音量</label>
+          <input type="range" id="volume" min="0" max="100" value="45">
+          <span class="val" id="volumeVal">45</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">音域 C3〜C5 ／ 4分の4拍子・2小節をランダム生成</div>
+  </div>
+</div>
+
+
+<script>
+// ===================== core music logic =====================
+const LETTER_INDEX = { C:0, D:1, E:2, F:3, G:4, A:5, B:6 };
+const PITCH_CLASS = [
+  ['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],
+  ['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]
+];
+const DURATIONS = [
+  { units: 1, name: '16th' },
+  { units: 2, name: '8th' },
+  { units: 4, name: 'quarter' },
+  { units: 8, name: 'half' },
+  { units: 16, name: 'whole' },
+];
+
+// i = chromatic index relative to C3 (i=0 -> C3). Works for negative/large i too.
+// Plain (key-agnostic, always-sharps) spelling - used only for the range
+// dropdowns, where we just need *some* readable label for a boundary note.
+function pitchInfo(i) {
+  const octave = 3 + Math.floor(i / 12);
+  const pc = ((i % 12) + 12) % 12;
+  const [letter, sharp] = PITCH_CLASS[pc];
+  const midi = 12 * (octave + 1) + pc;
+  const freq = 440 * Math.pow(2, (midi - 69) / 12);
+  const diatonicStep = LETTER_INDEX[letter] + 7 * octave;
+  const name = letter + (sharp ? '#' : '') + octave;
+  return { letter, sharp, octave, midi, freq, diatonicStep, name };
+}
+
+function indexFromOctavePc(octave, pc) { return (octave - 3) * 12 + pc; }
+
+function randInt(n) { return Math.floor(Math.random() * n); }
+
+function measureUnits(ts) { return ts.num * (16 / ts.den); }
+
+// ===================== key system =====================
+// Spelling for each key is derived generically (not hand-tabulated) from its
+// tonic, so adding more keys later is a one-line change to KEY_POOL. Each of
+// the 12 tonics can be built as major or (harmonic) minor.
+const LETTERS_CYCLE = ['C','D','E','F','G','A','B'];
+const NATURAL_PC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+const MAJOR_INTERVALS = [0,2,4,5,7,9,11];
+const NATURAL_MINOR_INTERVALS = [0,2,3,5,7,8,10];
+const SHARP_ORDER = ['F','C','G','D','A','E','B'];
+const FLAT_ORDER = ['B','E','A','D','G','C','F'];
+// standard treble-clef key-signature glyph positions (diatonic step) -
+// covers every accidental any of the 12 major/minor keys can need (up to 6
+// flats for Gb major, up to 5 sharps for B major)
+const KEYSIG_SHARP_STEP = { F:38, C:35, G:39, D:36, A:40 };
+const KEYSIG_FLAT_STEP  = { B:34, E:37, A:33, D:36, G:32, C:35, F:31 };
+
+const KEY_POOL = [
+  { name: 'C',  jpBase: 'ハ',   tonicLetter: 'C', tonicPc: 0 },
+  { name: 'Db', jpBase: '変ニ', tonicLetter: 'D', tonicPc: 1 },
+  { name: 'D',  jpBase: 'ニ',   tonicLetter: 'D', tonicPc: 2 },
+  { name: 'Eb', jpBase: '変ホ', tonicLetter: 'E', tonicPc: 3 },
+  { name: 'E',  jpBase: 'ホ',   tonicLetter: 'E', tonicPc: 4 },
+  { name: 'F',  jpBase: 'ヘ',   tonicLetter: 'F', tonicPc: 5 },
+  { name: 'Gb', jpBase: '変ト', tonicLetter: 'G', tonicPc: 6 },
+  { name: 'G',  jpBase: 'ト',   tonicLetter: 'G', tonicPc: 7 },
+  { name: 'Ab', jpBase: '変イ', tonicLetter: 'A', tonicPc: 8 },
+  { name: 'A',  jpBase: 'イ',   tonicLetter: 'A', tonicPc: 9 },
+  { name: 'Bb', jpBase: '変ロ', tonicLetter: 'B', tonicPc: 10 },
+  { name: 'B',  jpBase: 'ロ',   tonicLetter: 'B', tonicPc: 11 },
+];
+
+const NATURAL_LETTER_BY_PC = { 0:'C', 2:'D', 4:'E', 5:'F', 7:'G', 9:'A', 11:'B' };
+
+function makeKey(poolEntry, mode) {
+  mode = mode === 'minor' ? 'minor' : 'major';
+  const intervals = mode === 'minor' ? NATURAL_MINOR_INTERVALS : MAJOR_INTERVALS;
+  const startIdx = LETTERS_CYCLE.indexOf(poolEntry.tonicLetter);
+  const spelling = {};
+  const sigSharps = [], sigFlats = [];
+  let degree5Pc = null, degree6Natural = null;
+  for (let degree = 0; degree < 7; degree++) {
+    const letter = LETTERS_CYCLE[(startIdx + degree) % 7];
+    const pc = (poolEntry.tonicPc + intervals[degree]) % 12;
+    const natural = NATURAL_PC[letter];
+    let accidental = pc - natural;
+    if (accidental > 6) accidental -= 12;
+    if (accidental < -6) accidental += 12;
+    spelling[pc] = { letter, accidental };
+    if (accidental === 1) sigSharps.push(letter);
+    if (accidental === -1) sigFlats.push(letter);
+    if (degree === 5) degree5Pc = pc;
+    if (degree === 6) degree6Natural = { pc, letter, accidental };
+  }
+  // harmonic minor: raise the 7th degree by a semitone. The key SIGNATURE
+  // (captured above, from the natural 7th) is left as-is - the raise shows
+  // up as a per-note accidental instead, matching standard notation practice.
+  let augSecondPcs = null;
+  if (mode === 'minor') {
+    const raisedPc = (degree6Natural.pc + 1) % 12;
+    const raisedAccidental = degree6Natural.accidental + 1;
+    delete spelling[degree6Natural.pc];
+    spelling[raisedPc] = { letter: degree6Natural.letter, accidental: raisedAccidental };
+    augSecondPcs = [degree5Pc, raisedPc];
+  }
+  const sharps = SHARP_ORDER.filter(l => sigSharps.includes(l));
+  const flats = FLAT_ORDER.filter(l => sigFlats.includes(l));
+  const diatonicPcs = Object.keys(spelling).map(Number);
+  const jp = poolEntry.jpBase + (mode === 'minor' ? '短調' : '長調');
+  return Object.assign({}, poolEntry, { spelling, sharps, flats, diatonicPcs, mode, augSecondPcs, jp });
+}
+
+// Spelling for any chromatic pitch class in a given key - not just the 7
+// diatonic ones. Needed because off-key (chromatic) notes can still occur.
+// Falls back to: the natural letter if the pc is itself natural, otherwise a
+// sharp of the lower neighbor (sharp keys) or a flat of the upper neighbor
+// (flat keys) - the same convention ordinary engraving uses.
+function spellPitchClass(pc, key) {
+  if (key.spelling[pc]) return key.spelling[pc];
+  if (NATURAL_LETTER_BY_PC[pc] !== undefined) return { letter: NATURAL_LETTER_BY_PC[pc], accidental: 0 };
+  if (key.flats.length > 0) {
+    const upperNatPc = (pc + 1) % 12;
+    return { letter: NATURAL_LETTER_BY_PC[upperNatPc], accidental: -1 };
+  }
+  const lowerNatPc = (pc - 1 + 12) % 12;
+  return { letter: NATURAL_LETTER_BY_PC[lowerNatPc], accidental: 1 };
+}
+
+function accidentalSign(accidental) {
+  if (accidental === 0) return '';
+  if (accidental > 0) return '#'.repeat(accidental);
+  return 'b'.repeat(-accidental);
+}
+
+// key-aware spelling: used for every note that actually gets rendered/played
+// in a generated piece (as opposed to the plain pitchInfo() used by the UI
+// range pickers, which don't know about a key yet at that point).
+function pitchInfoInKey(i, key) {
+  const octave = 3 + Math.floor(i / 12);
+  const pc = ((i % 12) + 12) % 12;
+  const sp = spellPitchClass(pc, key);
+  const midi = 12 * (octave + 1) + pc;
+  const freq = 440 * Math.pow(2, (midi - 69) / 12);
+  const diatonicStep = LETTER_INDEX[sp.letter] + 7 * octave;
+  const name = sp.letter + accidentalSign(sp.accidental) + octave;
+  return { letter: sp.letter, accidental: sp.accidental, octave, midi, freq, diatonicStep, name };
+}
+
+function diatonicIndicesInRange(loIdx, hiIdx, key) {
+  const out = [];
+  for (let i = loIdx; i <= hiIdx; i++) {
+    if (key.diatonicPcs.includes(((i % 12) + 12) % 12)) out.push(i);
+  }
+  return out;
+}
+
+// true only for the specific augmented-2nd pair (natural 6th <-> raised 7th)
+// of a harmonic-minor key; always false for major keys. Threaded into every
+// melodic-step check below so generated lines avoid this characteristic
+// "ugly" leap without resorting to a direction-dependent (melodic-minor)
+// scale.
+function isAugmentedSecondLeap(a, b, key) {
+  if (!key.augSecondPcs) return false;
+  if (Math.abs(a - b) !== 3) return false;
+  const pcA = ((a % 12) + 12) % 12, pcB = ((b % 12) + 12) % 12;
+  const [lo, hi] = key.augSecondPcs;
+  return (pcA === lo && pcB === hi) || (pcA === hi && pcB === lo);
+}
+
+// Fuxian melodic restriction: no voice should ever leap a tritone/diminished
+// 5th (6 semitones) or a 7th (10 or 11 semitones) - these are awkward to
+// sing regardless of harmonic context, unlike the augmented 2nd above which
+// is specifically a minor-key scale artifact.
+function isForbiddenMelodicLeap(a, b) {
+  const d = Math.abs(a - b);
+  return d === 6 || d === 10 || d === 11;
+}
+
+// ===================== counterpoint mode (first species, 1:1) =====================
+// The interval/motion classifiers below only look at a pair of simultaneous
+// vertical intervals plus the melodic motion connecting them - they don't
+// assume the two voices share a rhythm. That part is reusable as-is if a
+// future free-counterpoint (independent-rhythm) generator is added; only the
+// outer "every position must be a simultaneity" loop below is specific to
+// strict first-species (note-against-note) writing.
+
+const INTERVAL_CLASS = {0:'perfect',1:'dissonant',2:'dissonant',3:'imperfect',4:'imperfect',
+  5:'dissonant',6:'dissonant',7:'perfect',8:'imperfect',9:'imperfect',10:'dissonant',11:'dissonant'};
+
+function classifyInterval(semi) { return INTERVAL_CLASS[Math.abs(semi) % 12]; }
+
+function classifyMotion(prevA, curA, prevB, curB) {
+  const dA = curA - prevA, dB = curB - prevB;
+  if (dA === 0 || dB === 0) return 'oblique';
+  if ((dA > 0 && dB > 0) || (dA < 0 && dB < 0)) return Math.abs(dA) === Math.abs(dB) ? 'parallel' : 'similar';
+  return 'contrary';
+}
+
+function generateCantusFirmusOnce(n, diatonicIdx, key) {
+  const sorted = diatonicIdx.slice().sort((a, b) => a - b);
+  const posPool = [];
+  for (let d = -7; d <= 7; d++) {
+    if (d === 0) continue;
+    const ad = Math.abs(d);
+    const w = ad <= 2 ? 6 : ad <= 4 ? 3 : 2;
+    for (let k = 0; k < w; k++) posPool.push(d);
+  }
+  const tonicPositions = [];
+  sorted.forEach((v, i) => { if (((v % 12) + 12) % 12 === key.tonicPc) tonicPositions.push(i); });
+
+  function isValidMove(curPos, nextPos, prevPos, requiredDir) {
+    if (nextPos < 0 || nextPos >= sorted.length) return false;
+    if (isAugmentedSecondLeap(sorted[curPos], sorted[nextPos], key)) return false;
+    if (isForbiddenMelodicLeap(sorted[curPos], sorted[nextPos])) return false;
+    if (prevPos !== null && nextPos === curPos && sorted[curPos] === sorted[prevPos]) return false;
+    if (requiredDir !== null && (nextPos - curPos) !== requiredDir) return false;
+    return true;
+  }
+
+  const startPos = tonicPositions.length ? tonicPositions[randInt(tonicPositions.length)] : randInt(sorted.length);
+  const posArr = [startPos];
+  let pendingDir = null; // leap recovery: step back the opposite way right after a leap (4th+)
+
+  for (let i = 1; i < n; i++) {
+    const curPos = posArr[i - 1];
+    const prevPos = i >= 2 ? posArr[i - 2] : null;
+    const isLastNote = i === n - 1;
+    let nextPos = null;
+
+    if (isLastNote) {
+      // must land on the tonic, as close to the current position as possible.
+      // Relax in tiers, but the leap-restriction/augmented-2nd checks (the
+      // two melodic-quality rules) are kept as long as humanly possible -
+      // only the repeat-check and leap-recovery requirement get dropped first.
+      let candidates = tonicPositions.filter(p => isValidMove(curPos, p, prevPos, pendingDir));
+      if (!candidates.length) candidates = tonicPositions.filter(p => isValidMove(curPos, p, prevPos, null));
+      if (!candidates.length) candidates = tonicPositions.filter(p =>
+        !isAugmentedSecondLeap(sorted[curPos], sorted[p], key) && !isForbiddenMelodicLeap(sorted[curPos], sorted[p]));
+      if (!candidates.length) candidates = tonicPositions.slice();
+      candidates.sort((a, b) => Math.abs(a - curPos) - Math.abs(b - curPos));
+      nextPos = candidates[0];
+    } else {
+      for (let tries = 0; tries < 50; tries++) {
+        const cand = curPos + posPool[randInt(posPool.length)];
+        if (isValidMove(curPos, cand, prevPos, pendingDir)) { nextPos = cand; break; }
+      }
+      if (nextPos === null) {
+        const candidates = [];
+        for (let p = 0; p < sorted.length; p++) if (isValidMove(curPos, p, prevPos, pendingDir)) candidates.push(p);
+        if (candidates.length) {
+          candidates.sort((a, b) => Math.abs(a - curPos) - Math.abs(b - curPos));
+          const nonStay = candidates.filter(p => p !== curPos);
+          nextPos = nonStay.length ? nonStay[0] : candidates[0];
+        } else nextPos = curPos;
+      }
+    }
+
+    const delta = nextPos - curPos;
+    pendingDir = Math.abs(delta) >= 3 ? -Math.sign(delta) : null;
+    posArr.push(nextPos);
+  }
+  return posArr.map(p => sorted[p]);
+}
+
+// Fuxian cantus firmus shaping: starts/ends on the tonic, a leap (4th or
+// larger) is followed by a single step back the other way, and the melodic
+// high point occurs exactly once. The first two are enforced directly during
+// the walk; the "one climax" rule is awkward to guarantee mid-walk (the
+// climax isn't known until the line is finished), so it's checked after the
+// fact and the line is re-rolled if violated.
+function generateCantusFirmus(n, diatonicIdx, key) {
+  let line = generateCantusFirmusOnce(n, diatonicIdx, key);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const peak = Math.max(...line);
+    const climaxOk = line.filter(v => v === peak).length === 1;
+    const finalLeapOk = !isForbiddenMelodicLeap(line[n - 2], line[n - 1]);
+    if (climaxOk && finalLeapOk) break;
+    line = generateCantusFirmusOnce(n, diatonicIdx, key);
+  }
+  return line;
+}
+
+function isValidCpStep(prevCF, curCF, prevCP, prevPrevCP, candCP, mode, isFirst, isLast, key) {
+  const vq = classifyInterval(candCP - curCF);
+  if (vq === 'dissonant') return false;
+  if (mode === 'above') {
+    if (candCP < curCF) return false;
+    if (prevCF !== null && candCP < prevCF) return false;
+  } else {
+    if (candCP > curCF) return false;
+    if (prevCF !== null && candCP > prevCF) return false;
+  }
+  if (prevCP !== null && Math.abs(candCP - prevCP) > 12) return false;
+  if (prevCP !== null && isAugmentedSecondLeap(prevCP, candCP, key)) return false;
+  if (prevCP !== null && isForbiddenMelodicLeap(prevCP, candCP)) return false;
+  // no 3rd consecutive identical note (a single immediate repeat is still fine)
+  if (prevPrevCP !== null && candCP === prevCP && prevCP === prevPrevCP) return false;
+  if (prevCP !== null && prevCF !== null && vq === 'perfect') {
+    const dCF = curCF - prevCF, dCP = candCP - prevCP;
+    if ((dCF > 0 && dCP > 0) || (dCF < 0 && dCP < 0)) return false;
+  }
+  if (isFirst && vq !== 'perfect') return false;
+  return { vq };
+}
+
+function scoreCpCandidate(prevCF, curCF, prevCP, candCP, vq, isFirst, isLast) {
+  let score = 0;
+  if (prevCP !== null) score -= Math.abs(candCP - prevCP) * 2;
+  if (prevCP !== null && prevCF !== null) {
+    const motion = classifyMotion(prevCF, curCF, prevCP, candCP);
+    if (motion === 'contrary') score += 5;
+    else if (motion === 'oblique') score += 2;
+  }
+  if (prevCP !== null && candCP === prevCP) score -= 6; // discourage staying in place
+  if (!isFirst && vq === 'imperfect') score += 3;
+  score += Math.random() * 1.5;
+  return score;
+}
+
+function generateCounterpointVoice(cf, diatonicIdx, mode, key, opts) {
+  const n = cf.length;
+  const topK = (opts && opts.topK) || 6;
+  const nodeBudget = (opts && opts.nodeBudget) || 4000;
+  const relax = (opts && opts.relaxOverlap) || false;
+  let nodes = 0;
+  const cp = new Array(n).fill(null);
+
+  function candidatesAt(i) {
+    const curCF = cf[i];
+    const prevCF = i > 0 ? cf[i - 1] : null;
+    const prevCP = i > 0 ? cp[i - 1] : null;
+    const prevPrevCP = i > 1 ? cp[i - 2] : null;
+    const isFirst = i === 0, isLast = i === n - 1;
+    const out = [];
+    for (const p of diatonicIdx) {
+      let res = isValidCpStep(prevCF, curCF, prevCP, prevPrevCP, p, mode, isFirst, isLast, key);
+      if (!res && relax) {
+        const vqOnly = classifyInterval(p - curCF);
+        const noTripleRepeat = !(prevPrevCP !== null && p === prevCP && prevCP === prevPrevCP);
+        if (vqOnly !== 'dissonant' && noTripleRepeat && !(prevCP !== null && isAugmentedSecondLeap(prevCP, p, key)) && !(prevCP !== null && isForbiddenMelodicLeap(prevCP, p))) {
+          const crossingOk = mode === 'above' ? p >= curCF : p <= curCF;
+          const leapOk = prevCP === null || Math.abs(p - prevCP) <= 12;
+          let parallelOk = true;
+          if (prevCP !== null && prevCF !== null && vqOnly === 'perfect') {
+            const dCF = curCF - prevCF, dCP = p - prevCP;
+            parallelOk = !((dCF > 0 && dCP > 0) || (dCF < 0 && dCP < 0));
+          }
+          const edgeOk = !isFirst || vqOnly === 'perfect';
+          if (crossingOk && leapOk && parallelOk && edgeOk) res = { vq: vqOnly };
+        }
+      }
+      if (res) out.push({ p, score: scoreCpCandidate(prevCF, curCF, prevCP, p, res.vq, isFirst, isLast) });
+    }
+    out.sort((a, b) => b.score - a.score);
+    return out.slice(0, topK).map(o => o.p);
+  }
+
+  function backtrack(i) {
+    if (i === n) return true;
+    nodes++;
+    if (nodes > nodeBudget) return false;
+    for (const c of candidatesAt(i)) {
+      cp[i] = c;
+      if (backtrack(i + 1)) return true;
+      cp[i] = null;
+    }
+    return false;
+  }
+
+  return backtrack(0) ? cp : null;
+}
+
+function generateFirstSpeciesCounterpoint(n, diatonicIdx, mode, key, maxCfRetries) {
+  maxCfRetries = maxCfRetries || 30;
+  for (let attempt = 0; attempt < maxCfRetries; attempt++) {
+    const cf = generateCantusFirmus(n, diatonicIdx, key);
+    let cp = generateCounterpointVoice(cf, diatonicIdx, mode, key, { topK: 6, nodeBudget: 3000 });
+    if (!cp) cp = generateCounterpointVoice(cf, diatonicIdx, mode, key, { topK: 8, nodeBudget: 6000, relaxOverlap: true });
+    if (cp) return { cf, cp };
+  }
+  return null;
+}
+
+// ===================== bass voice (3rd voice, simplified / "forced" preview) =====================
+// Bass must be consonant with BOTH the cantus firmus and the existing
+// counterpoint voice, and stay below both (it is the lowest voice by
+// definition). The edge (first/last) requirement only demands a perfect
+// consonance against whichever of cf/cp sits architecturally "on top" -
+// requiring perfect-with-both at once turned out to be far too restrictive
+// (mathematically forces bass to double one of the upper voices an exact
+// octave-or-more below, which often doesn't fit the available range).
+function isValidBassStep(prevCF, curCF, prevCP, curCP, prevBass, prevPrevBass, candBass, mode, isFirst, isLast, key) {
+  const vqCF = classifyInterval(candBass - curCF);
+  const vqCP = classifyInterval(candBass - curCP);
+  if (vqCF === 'dissonant' || vqCP === 'dissonant') return false;
+
+  if (candBass > curCF || candBass > curCP) return false;
+  if (prevCF !== null && candBass > prevCF) return false;
+  if (prevCP !== null && candBass > prevCP) return false;
+
+  if (prevBass !== null && Math.abs(candBass - prevBass) > 12) return false;
+  if (prevBass !== null && isAugmentedSecondLeap(prevBass, candBass, key)) return false;
+  if (prevBass !== null && isForbiddenMelodicLeap(prevBass, candBass)) return false;
+  // no 3rd consecutive identical note (a single immediate repeat is still fine)
+  if (prevPrevBass !== null && candBass === prevBass && prevBass === prevPrevBass) return false;
+
+  if (prevBass !== null && prevCF !== null && vqCF === 'perfect') {
+    const dCF = curCF - prevCF, dB = candBass - prevBass;
+    if ((dCF > 0 && dB > 0) || (dCF < 0 && dB < 0)) return false;
+  }
+  if (prevBass !== null && prevCP !== null && vqCP === 'perfect') {
+    const dCP = curCP - prevCP, dB = candBass - prevBass;
+    if ((dCP > 0 && dB > 0) || (dCP < 0 && dB < 0)) return false;
+  }
+
+  if (isFirst) {
+    const vqTop = mode === 'above' ? vqCP : vqCF;
+    if (vqTop !== 'perfect') return false;
+  }
+
+  return { vqCF, vqCP };
+}
+
+function scoreBassCandidate(prevCF, curCF, prevCP, curCP, prevBass, candBass, vqCF, vqCP, isFirst, isLast) {
+  let score = 0;
+  if (prevBass !== null) score -= Math.abs(candBass - prevBass) * 2;
+  if (prevBass !== null && prevCF !== null) {
+    const m = classifyMotion(prevCF, curCF, prevBass, candBass);
+    if (m === 'contrary') score += 3; else if (m === 'oblique') score += 1;
+  }
+  if (prevBass !== null && prevCP !== null) {
+    const m = classifyMotion(prevCP, curCP, prevBass, candBass);
+    if (m === 'contrary') score += 3; else if (m === 'oblique') score += 1;
+  }
+  if (prevBass !== null && candBass === prevBass) score -= 6; // discourage staying in place
+  if (!isFirst) {
+    if (vqCF === 'imperfect') score += 1.5;
+    if (vqCP === 'imperfect') score += 1.5;
+  }
+  score += Math.random() * 1.5;
+  return score;
+}
+
+function generateBassVoice(cf, cp, candidateIdx, mode, key, opts) {
+  const n = cf.length;
+  const topK = (opts && opts.topK) || 6;
+  const nodeBudget = (opts && opts.nodeBudget) || 4000;
+  let nodes = 0;
+  const bass = new Array(n).fill(null);
+  const sorted = candidateIdx.slice().sort((a, b) => a - b);
+
+  function candidatesAt(i) {
+    const curCF = cf[i], curCP = cp[i];
+    const prevCF = i > 0 ? cf[i - 1] : null, prevCP = i > 0 ? cp[i - 1] : null;
+    const prevBass = i > 0 ? bass[i - 1] : null;
+    const prevPrevBass = i > 1 ? bass[i - 2] : null;
+    const isFirst = i === 0, isLast = i === n - 1;
+    const out = [];
+    for (const p of sorted) {
+      const res = isValidBassStep(prevCF, curCF, prevCP, curCP, prevBass, prevPrevBass, p, mode, isFirst, isLast, key);
+      if (res) {
+        const score = scoreBassCandidate(prevCF, curCF, prevCP, curCP, prevBass, p, res.vqCF, res.vqCP, isFirst, isLast);
+        out.push({ p, score });
+      }
+    }
+    out.sort((a, b) => b.score - a.score);
+    return out.slice(0, topK).map(o => o.p);
+  }
+
+  function backtrack(i) {
+    if (i === n) return true;
+    nodes++;
+    if (nodes > nodeBudget) return false;
+    for (const c of candidatesAt(i)) {
+      bass[i] = c;
+      if (backtrack(i + 1)) return true;
+      bass[i] = null;
+    }
+    return false;
+  }
+
+  return backtrack(0) ? bass : null;
+}
+
+// Bass writing is noticeably more constrained than 2-voice (consonant with
+// two voices at once, double the parallel-motion checks), so a fixed
+// cantus firmus sometimes has no valid bass line at all. Re-rolling the
+// cantus firmus + counterpoint together (not just retrying bass alone)
+// resolves the vast majority of these cases quickly.
+function generateThreeVoices(n, candidateIdx, mode, key, maxOuterRetries) {
+  maxOuterRetries = maxOuterRetries || 80;
+  for (let outer = 0; outer < maxOuterRetries; outer++) {
+    const cfcp = generateFirstSpeciesCounterpoint(n, candidateIdx, mode, key, 10);
+    if (!cfcp) continue;
+    let bass = generateBassVoice(cfcp.cf, cfcp.cp, candidateIdx, mode, key, { topK: 6, nodeBudget: 4000 });
+    if (!bass) bass = generateBassVoice(cfcp.cf, cfcp.cp, candidateIdx, mode, key, { topK: 10, nodeBudget: 10000 });
+    if (bass) return { cf: cfcp.cf, cp: cfcp.cp, bass };
+  }
+  return null;
+}
+
+// ===================== 4th species (suspension/syncopation) =====================
+// CP enters half a beat late (a rest first), then each note ties across into
+// the next cantus-firmus note. If the held-over pitch is dissonant against
+// the new CF note (a suspension), the next note MUST resolve down by exactly
+// one step; if it's already consonant, the next note is freely chosen.
+function generateSuspensionVoice(cf, candidateIdx, mode, key, opts) {
+  const m = cf.length;
+  const sorted = candidateIdx.slice().sort((a, b) => a - b);
+  const indexOf = new Map(sorted.map((v, i) => [v, i]));
+  const topK = (opts && opts.topK) || 6;
+  const nodeBudget = (opts && opts.nodeBudget) || 6000;
+  let nodes = 0;
+  const prep = new Array(m).fill(null);
+  const isSuspension = new Array(m).fill(false);
+
+  function stepIndexDiff(aVal, bVal) {
+    const ai = indexOf.get(aVal), bi = indexOf.get(bVal);
+    if (ai === undefined || bi === undefined) return null;
+    return bi - ai;
+  }
+
+  function candidatesAt(k) {
+    const curCF = cf[k];
+    const prevCF = k > 0 ? cf[k - 1] : null;
+    const prevPrep = k > 0 ? prep[k - 1] : null;
+    const prevPrevPrep = k > 1 ? prep[k - 2] : null;
+    const isFirst = k === 0, isLast = k === m - 1;
+    const out = [];
+
+    let forcedStepDown = false;
+    if (!isFirst) forcedStepDown = (classifyInterval(prevPrep - curCF) === 'dissonant');
+
+    for (const p of sorted) {
+      const vq = classifyInterval(p - curCF);
+      if (vq === 'dissonant') continue;
+      if (forcedStepDown) {
+        const d = stepIndexDiff(prevPrep, p);
+        if (d !== -1) continue;
+      }
+      if (prevPrevPrep !== null && p === prevPrep && prevPrep === prevPrevPrep) continue;
+      if (prevPrep !== null && isAugmentedSecondLeap(prevPrep, p, key)) continue;
+      if (prevPrep !== null && isForbiddenMelodicLeap(prevPrep, p)) continue;
+      if (prevPrep !== null && Math.abs(p - prevPrep) > 12) continue;
+      if (mode === 'above') { if (p < curCF) continue; if (prevCF !== null && p < prevCF) continue; }
+      else { if (p > curCF) continue; if (prevCF !== null && p > prevCF) continue; }
+      if (prevPrep !== null && prevCF !== null && vq === 'perfect') {
+        const dCF = curCF - prevCF, dCP = p - prevPrep;
+        if ((dCF > 0 && dCP > 0) || (dCF < 0 && dCP < 0)) continue;
+      }
+      if (isFirst && vq !== 'perfect') continue;
+      out.push({ p, vq, wasSuspension: forcedStepDown });
+    }
+
+    out.forEach(c => {
+      let score = 0;
+      if (prevPrep !== null) {
+        const d = stepIndexDiff(prevPrep, c.p);
+        score -= Math.abs(c.p - prevPrep) * 2;
+        if (d === -1) score += 4;
+        if (c.p === prevPrep) score -= 6;
+      }
+      if (prevPrep !== null && prevCF !== null) {
+        const motion = classifyMotion(prevCF, curCF, prevPrep, c.p);
+        if (motion === 'contrary') score += 3;
+      }
+      if (!isFirst && !isLast && c.vq === 'imperfect') score += 2;
+      score += Math.random() * 1.5;
+      c.score = score;
+    });
+    out.sort((a, b) => b.score - a.score);
+    return out.slice(0, topK);
+  }
+
+  function backtrack(k) {
+    if (k === m) return true;
+    nodes++;
+    if (nodes > nodeBudget) return false;
+    for (const c of candidatesAt(k)) {
+      prep[k] = c.p;
+      isSuspension[k] = c.wasSuspension;
+      if (backtrack(k + 1)) return true;
+      prep[k] = null; isSuspension[k] = false;
+    }
+    return false;
+  }
+
+  return backtrack(0) ? { prep, isSuspension } : null;
+}
+
+function generateFourthSpecies(m, candidateIdx, mode, key, maxCfRetries) {
+  maxCfRetries = maxCfRetries || 50;
+  for (let attempt = 0; attempt < maxCfRetries; attempt++) {
+    const cf = generateCantusFirmus(m, candidateIdx, key);
+    let result = generateSuspensionVoice(cf, candidateIdx, mode, key, { topK: 6, nodeBudget: 6000 });
+    if (!result) result = generateSuspensionVoice(cf, candidateIdx, mode, key, { topK: 10, nodeBudget: 12000 });
+    if (result) return { cf, prep: result.prep, isSuspension: result.isSuspension };
+  }
+  return null;
+}
+
+// ===================== N:1 species counterpoint (2:1, 4:1) =====================
+// Strong beat (aligned with the cantus firmus) must be consonant, same as
+// species 1. Weak beats may additionally be a stepwise passing-tone
+// dissonance: entered by a single step, and - tracked forward only, no
+// lookahead needed - whatever note follows must continue that same step
+// direction. The final cantus-firmus beat always collapses to a single
+// note so the piece can land cleanly on the cadence.
+function buildSlots(cf, N) {
+  const slots = [];
+  cf.forEach((pitch, gi) => {
+    const count = (gi === cf.length - 1) ? 1 : N;
+    for (let k = 0; k < count; k++) slots.push({ groupIdx: gi, posInGroup: k, cfPitch: pitch });
+  });
+  return slots;
+}
+
+function generateSpeciesVoice(cf, N, candidateIdx, mode, key, opts) {
+  const slots = buildSlots(cf, N);
+  const n = slots.length;
+  const sorted = candidateIdx.slice().sort((a, b) => a - b);
+  const diatonicSet = new Set(sorted);
+  // chromatic half-step passing tones: wherever two adjacent diatonic notes
+  // are a whole step (2 semitones) apart, the out-of-key note between them
+  // can be used as a weak-beat-only passing tone (musical richness over
+  // strict diatonic purity - chromatic mode already has every semitone
+  // available, so this only ever adds anything new in diatonic mode).
+  const extended = sorted.slice();
+  for (let idx = 0; idx < sorted.length - 1; idx++) {
+    if (sorted[idx + 1] - sorted[idx] === 2) extended.push(sorted[idx] + 1);
+  }
+  extended.sort((a, b) => a - b);
+  const indexOf = new Map(extended.map((v, idx) => [v, idx]));
+  const topK = (opts && opts.topK) || 6;
+  const nodeBudget = (opts && opts.nodeBudget) || 6000;
+  let nodes = 0;
+  const cp = new Array(n).fill(null);
+  const pending = new Array(n).fill(null);
+
+  function isStepApart(aVal, bVal) {
+    const ai = indexOf.get(aVal), bi = indexOf.get(bVal);
+    if (ai === undefined || bi === undefined) return null;
+    const d = bi - ai;
+    return Math.abs(d) === 1 ? d : null;
+  }
+
+  function candidatesAt(i) {
+    const slot = slots[i];
+    const curCF = slot.cfPitch;
+    const prevSlot = i > 0 ? slots[i - 1] : null;
+    const prevCF = prevSlot ? prevSlot.cfPitch : null;
+    const prevCP = i > 0 ? cp[i - 1] : null;
+    const prevPrevCP = i > 1 ? cp[i - 2] : null;
+    const isFirst = i === 0, isLast = i === n - 1;
+    const isStrong = slot.posInGroup === 0;
+    const requiredDir = i > 0 ? pending[i - 1] : null;
+
+    const out = [];
+    const pool = isStrong ? sorted : extended;
+    for (const p of pool) {
+      const isChromaticInsertion = !diatonicSet.has(p);
+      const vq = classifyInterval(p - curCF);
+      let passingDir = null;
+      if (isChromaticInsertion) {
+        // always weak-beat-only, and always treated as a passing tone
+        // (entry by half-step) regardless of its own harmonic consonance -
+        // it's a transient embellishment, not a freely-chosen chromatic note
+        if (prevCP === null) continue;
+        const d = isStepApart(prevCP, p);
+        if (d === null) continue;
+        passingDir = d;
+      } else if (vq === 'dissonant') {
+        if (isStrong) continue;
+        if (prevCP === null) continue;
+        const d = isStepApart(prevCP, p);
+        if (d === null) continue;
+        passingDir = d;
+      }
+      if (requiredDir !== null) {
+        const d = isStepApart(prevCP, p);
+        if (d !== requiredDir) continue;
+      }
+      if (mode === 'above') {
+        if (p < curCF) continue;
+        if (prevCF !== null && p < prevCF) continue;
+      } else {
+        if (p > curCF) continue;
+        if (prevCF !== null && p > prevCF) continue;
+      }
+      if (prevCP !== null && Math.abs(p - prevCP) > 12) continue;
+      if (prevCP !== null && isAugmentedSecondLeap(prevCP, p, key)) continue;
+      if (prevCP !== null && isForbiddenMelodicLeap(prevCP, p)) continue;
+      // no 3rd consecutive identical note (a single immediate repeat is still fine)
+      if (prevPrevCP !== null && p === prevCP && prevCP === prevPrevCP) continue;
+      if (prevCP !== null && prevCF !== null && vq === 'perfect') {
+        const dCF = curCF - prevCF, dCP = p - prevCP;
+        if ((dCF > 0 && dCP > 0) || (dCF < 0 && dCP < 0)) continue;
+      }
+      if (isFirst && vq !== 'perfect') continue;
+      out.push({ p, vq, passingDir });
+    }
+
+    out.forEach(c => {
+      let score = 0;
+      if (prevCP !== null) score -= Math.abs(c.p - prevCP) * 2;
+      if (prevCP !== null && prevCF !== null) {
+        const motion = classifyMotion(prevCF, curCF, prevCP, c.p);
+        if (motion === 'contrary') score += 5;
+        else if (motion === 'oblique') score += 2;
+      }
+      if (!isStrong && c.vq === 'dissonant') score += 5;
+      if (!isStrong && !diatonicSet.has(c.p)) score -= 5; // rare spice, not a default choice
+      if (prevCP !== null && c.p === prevCP) score -= 6; // discourage staying in place
+      if (isStrong && !isFirst && c.vq === 'imperfect') score += 3;
+      score += Math.random() * 1.5;
+      c.score = score;
+    });
+    out.sort((a, b) => b.score - a.score);
+    return out.slice(0, topK);
+  }
+
+  function backtrack(i) {
+    if (i === n) return true;
+    nodes++;
+    if (nodes > nodeBudget) return false;
+    for (const c of candidatesAt(i)) {
+      cp[i] = c.p;
+      pending[i] = c.passingDir;
+      if (backtrack(i + 1)) return true;
+      cp[i] = null; pending[i] = null;
+    }
+    return false;
+  }
+
+  return backtrack(0) ? { cp, slots } : null;
+}
+
+function generateNSpeciesCounterpoint(cfNoteCount, N, candidateIdx, mode, key, maxCfRetries) {
+  maxCfRetries = maxCfRetries || 30;
+  for (let attempt = 0; attempt < maxCfRetries; attempt++) {
+    const cf = generateCantusFirmus(cfNoteCount, candidateIdx, key);
+    let result = generateSpeciesVoice(cf, N, candidateIdx, mode, key, { topK: 6, nodeBudget: 6000 });
+    if (!result) result = generateSpeciesVoice(cf, N, candidateIdx, mode, key, { topK: 10, nodeBudget: 12000 });
+    if (result) return { cf, cp: result.cp, slots: result.slots };
+  }
+  return null;
+}
+
+function flattenSpeciesForPlayback(cf, slots, cp, cfUnit, N) {
+  const cfEvents = cf.map(pitch => ({ pitch, units: cfUnit }));
+  const cpEvents = slots.map((s, i) => {
+    const isFinalGroupSlot = (s.groupIdx === cf.length - 1);
+    const units = isFinalGroupSlot ? cfUnit : Math.max(1, cfUnit / N);
+    return { pitch: cp[i], units };
+  });
+  return { cfEvents, cpEvents };
+}
+
+// ---- SVG layout ----
+const HALF = 7;
+const BOTTOM_LINE_Y = 230;
+const STAFF_LEFT = 70;
+const STEM_LEN = 32;
+const COLOR = '#33421f';
+
+function yForStep(step) { return BOTTOM_LINE_Y - (step - 30) * HALF; }
+
+function ledgerSteps(step) {
+  const lines = [];
+  if (step < 30) { for (let s = 28; s >= step; s -= 2) lines.push(s); }
+  else if (step > 38) { for (let s = 40; s <= step; s += 2) lines.push(s); }
+  return lines;
+}
+
+function widthForUnits(units) { return 24 + units * 5; }
+
+function keySignatureAccidental(letter, key) {
+  if (key.sharps.includes(letter)) return 1;
+  if (key.flats.includes(letter)) return -1;
+  return 0;
+}
+
+// Draws clef + key signature into `parts`, returns the x position where the
+// time signature numerals should be centered (notes start a bit after that).
+function buildStaffHeader(parts, key) {
+  const clefX = STAFF_LEFT + 22;
+  const clefDy = 90;
+  const CT = (px, py) => `${clefX + (px - clefX) * 0.95} ${py * 0.95 + clefDy}`;
+  parts.push(`<path d="
+    M ${CT(clefX+6,26)}
+    C ${CT(clefX+22,30)}, ${CT(clefX+20,54)}, ${CT(clefX+2,58)}
+    C ${CT(clefX-16,62)}, ${CT(clefX-18,40)}, ${CT(clefX-4,36)}
+    C ${CT(clefX+6,33)}, ${CT(clefX+10,42)}, ${CT(clefX+2,46)}
+    M ${CT(clefX+6,26)}
+    C ${CT(clefX-6,20)}, ${CT(clefX-10,8)}, ${CT(clefX+2,2)}
+    C ${CT(clefX+14,-4)}, ${CT(clefX+24,6)}, ${CT(clefX+18,16)}
+    L ${CT(clefX+2,46)}
+    L ${CT(clefX+2,130)}
+    C ${CT(clefX+2,144)}, ${CT(clefX-14,146)}, ${CT(clefX-16,134)}
+    C ${CT(clefX-17,126)}, ${CT(clefX-8,122)}, ${CT(clefX-6,130)}
+  " fill="none" stroke="${COLOR}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`);
+  parts.push(`<circle cx="${clefX+2*0.95}" cy="${130*0.95+clefDy}" r="2.6" fill="${COLOR}"/>`);
+
+  let x = STAFF_LEFT + 52;
+  const glyphs = key.sharps.length
+    ? key.sharps.map(l => ({ ch: '\u266F', step: KEYSIG_SHARP_STEP[l], dy: 6 }))
+    : key.flats.map(l => ({ ch: '\u266D', step: KEYSIG_FLAT_STEP[l], dy: 8 }));
+  glyphs.forEach(g => {
+    parts.push(`<text x="${x}" y="${yForStep(g.step)+g.dy}" font-size="20" fill="${COLOR}" text-anchor="middle">${g.ch}</text>`);
+    x += 12;
+  });
+  return x + 10;
+}
+
+// Time signature numerals: classic bold serif (matches traditional engraving
+// much better than the page's rounded UI font, which text elements would
+// otherwise inherit), sized/positioned to fill each half of the staff.
+const TS_FONT = "'Caveat', cursive";
+function timeSignatureMarkup(tsX, ts) {
+  const wide = String(ts.num).length > 1 || String(ts.den).length > 1;
+  const fs = wide ? 26 : 32;
+  const numY = yForStep(38) + 14;
+  const denY = yForStep(34) + (wide ? 15 : 18);
+  return `<text x="${tsX}" y="${numY}" font-size="${fs}" font-weight="700" font-family="${TS_FONT}" fill="${COLOR}" text-anchor="middle">${ts.num}</text>` +
+         `<text x="${tsX}" y="${denY}" font-size="${fs}" font-weight="700" font-family="${TS_FONT}" fill="${COLOR}" text-anchor="middle">${ts.den}</text>`;
+}
+
+function buildCounterpointSVGSplit(cf, cp, ts, mode, uniformDuration, key) {
+  const n = cf.length;
+  const measureNotes = n / 2;
+  const numberY = yForStep(38) - 45;
+  const OFFSET = 10;
+  const upperIsCp = mode === 'above';
+
+  function buildRow(rowIndices, includeTimeSig) {
+    const headerParts = [];
+    const tsX = buildStaffHeader(headerParts, key);
+    const noteBaseX = includeTimeSig ? tsX + 35 : tsX + 10;
+    const slotW = widthForUnits(uniformDuration);
+    let x = noteBaseX;
+    const slotX = [];
+    let minStep = 30, maxStep = 38;
+    rowIndices.forEach(i => {
+      slotX.push(x + slotW / 2);
+      x += slotW;
+      const sCf = pitchInfoInKey(cf[i], key).diatonicStep, sCp = pitchInfoInKey(cp[i], key).diatonicStep;
+      minStep = Math.min(minStep, sCf, sCp);
+      maxStep = Math.max(maxStep, sCf, sCp);
+    });
+    const totalWidth = x + 40;
+    const staffRight = totalWidth - 30;
+
+    const parts = [];
+    for (let s = 30; s <= 38; s += 2) {
+      const y = yForStep(s);
+      parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+    }
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+    parts.push(...headerParts);
+    if (includeTimeSig) parts.push(timeSignatureMarkup(tsX, ts));
+
+    function cpLedgers(cx, step) {
+      const m = [];
+      ledgerSteps(step).forEach(s => {
+        const y = yForStep(s);
+        m.push(`<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+      });
+      return m.join('');
+    }
+    function cpNotehead(cx, y) {
+      return `<ellipse cx="${cx}" cy="${y}" rx="8" ry="6" transform="rotate(-18 ${cx} ${y})" fill="${COLOR}" stroke="${COLOR}" stroke-width="2"/>`;
+    }
+    function cpStem(sx, y, stemUp) {
+      const ey = y + (stemUp ? -STEM_LEN : STEM_LEN);
+      return `<line x1="${sx}" y1="${y}" x2="${sx}" y2="${ey}" stroke="${COLOR}" stroke-width="2.5"/>`;
+    }
+    function accidentalGlyph(cxPos, yPos, info) {
+      const sigAcc = keySignatureAccidental(info.letter, key);
+      if (info.accidental === sigAcc) return '';
+      const d = info.accidental;
+      const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+      const fs = Math.abs(d) > 1 ? 11 : 14;
+      return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+    }
+
+    rowIndices.forEach((i, localI) => {
+      const cx = slotX[localI];
+      const cfInfo = pitchInfoInKey(cf[i], key), cpInfo = pitchInfoInKey(cp[i], key);
+      const stepCf = cfInfo.diatonicStep, stepCp = cpInfo.diatonicStep;
+      const yCf = yForStep(stepCf), yCp = yForStep(stepCp);
+      const unison = cf[i] === cp[i];
+      const closeInterval = Math.abs(stepCf - stepCp) <= 1 && !unison;
+      let cfX = cx, cpX = cx;
+      if (closeInterval) { if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET; }
+
+      let inner = cpLedgers(cfX, stepCf);
+      if (!unison) inner += cpLedgers(cpX, stepCp);
+
+      if (unison) {
+        inner += accidentalGlyph(cx, yCf, cfInfo);
+        inner += cpNotehead(cx, yCf);
+        inner += cpStem(cx + 7, yCf, true);
+        inner += cpStem(cx - 7, yCf, false);
+      } else {
+        inner += accidentalGlyph(cfX, yCf, cfInfo);
+        inner += accidentalGlyph(cpX, yCp, cpInfo);
+        inner += cpNotehead(cfX, yCf);
+        inner += cpNotehead(cpX, yCp);
+        const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+        inner += cpStem(cfX + (cfStemUp ? 7 : -7), yCf, cfStemUp);
+        inner += cpStem(cpX + (cpStemUp ? 7 : -7), yCp, cpStemUp);
+      }
+
+      const degree = Math.abs(stepCf - stepCp) + 1;
+      inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+      parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+    });
+
+    return { parts, minStep, maxStep, width: totalWidth };
+  }
+
+  const row1Indices = Array.from({ length: measureNotes }, (_, k) => k);
+  const row2Indices = Array.from({ length: n - measureNotes }, (_, k) => k + measureNotes);
+  const row1 = buildRow(row1Indices, true);
+  const row2 = buildRow(row2Indices, false);
+
+  const row1TopY = Math.min(80, yForStep(row1.maxStep) - 30, numberY - 16);
+  const row1BottomY = Math.max(245, yForStep(row1.minStep) + 30);
+  const row2TopY = Math.min(80, yForStep(row2.maxStep) - 30, numberY - 16);
+  const row2BottomY = Math.max(245, yForStep(row2.minStep) + 30);
+  const row1Height = row1BottomY - row1TopY;
+  const row2Height = row2BottomY - row2TopY;
+  const GAP = 26;
+  const totalWidth = Math.max(row1.width, row2.width);
+  const totalHeight = row1Height + GAP + row2Height;
+
+  const out = [];
+  out.push(`<svg viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  out.push(`<g transform="translate(0, ${-row1TopY})">${row1.parts.join('\n')}</g>`);
+  out.push(`<g transform="translate(0, ${row1Height + GAP - row2TopY})">${row2.parts.join('\n')}</g>`);
+  out.push('</svg>');
+  return out.join('\n');
+}
+
+function buildCounterpointSVG(cf, cp, ts, mode, uniformDuration, key) {
+  if (uniformDuration === 1) return buildCounterpointSVGSplit(cf, cp, ts, mode, uniformDuration, key);
+  const headerParts = [];
+  const tsX = buildStaffHeader(headerParts, key);
+  const noteBaseX = tsX + 35;
+
+  const parts = [];
+  const n = cf.length;
+  const slotW = widthForUnits(uniformDuration);
+  let x = noteBaseX;
+  const positions = [];
+  let minStep = 30, maxStep = 38;
+  const measureNotes = n / 2;
+  for (let i = 0; i < n; i++) {
+    const cx = x + slotW / 2;
+    positions.push({ i, cx });
+    x += slotW;
+    if (i === measureNotes - 1) { positions.push({ barlineAt: x }); x += 18; }
+    const sCf = pitchInfoInKey(cf[i], key).diatonicStep, sCp = pitchInfoInKey(cp[i], key).diatonicStep;
+    minStep = Math.min(minStep, sCf, sCp);
+    maxStep = Math.max(maxStep, sCf, sCp);
+  }
+  const totalWidth = x + 40;
+  const staffRight = totalWidth - 30;
+  const numberY = yForStep(38) - 45; // fixed row above the staff for degree numbers
+  const topY = Math.min(80, yForStep(maxStep) - 30, numberY - 16);
+  const bottomY = Math.max(245, yForStep(minStep) + 30);
+
+  parts.push(`<svg viewBox="0 ${topY} ${totalWidth} ${bottomY - topY}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  for (let s = 30; s <= 38; s += 2) {
+    const y = yForStep(s);
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+  }
+  parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+  parts.push(...headerParts);
+
+  parts.push(timeSignatureMarkup(tsX, ts));
+
+  function cpLedgers(cx, step) {
+    const m = [];
+    ledgerSteps(step).forEach(s => {
+      const y = yForStep(s);
+      m.push(`<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+    });
+    return m.join('');
+  }
+  function cpNotehead(cx, y) {
+    return `<ellipse cx="${cx}" cy="${y}" rx="8" ry="6" transform="rotate(-18 ${cx} ${y})" fill="${COLOR}" stroke="${COLOR}" stroke-width="2"/>`;
+  }
+  function cpStem(sx, y, stemUp) {
+    const ey = y + (stemUp ? -STEM_LEN : STEM_LEN);
+    return `<line x1="${sx}" y1="${y}" x2="${sx}" y2="${ey}" stroke="${COLOR}" stroke-width="2.5"/>`;
+  }
+
+  const OFFSET = 10;
+  positions.forEach(p => {
+    if (p.barlineAt) {
+      parts.push(`<line x1="${p.barlineAt}" y1="${yForStep(30)}" x2="${p.barlineAt}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+      return;
+    }
+    const { i, cx } = p;
+    const cfInfo = pitchInfoInKey(cf[i], key), cpInfo = pitchInfoInKey(cp[i], key);
+    const stepCf = cfInfo.diatonicStep, stepCp = cpInfo.diatonicStep;
+    const yCf = yForStep(stepCf), yCp = yForStep(stepCp);
+    const upperIsCp = mode === 'above';
+    const unison = cf[i] === cp[i];
+    const closeInterval = Math.abs(stepCf - stepCp) <= 1 && !unison;
+
+    let cfX = cx, cpX = cx;
+    if (closeInterval) {
+      if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET;
+    }
+
+    let inner = cpLedgers(cfX, stepCf);
+    if (!unison) inner += cpLedgers(cpX, stepCp);
+
+    function accidentalGlyph(cxPos, yPos, info) {
+      const sigAcc = keySignatureAccidental(info.letter, key);
+      if (info.accidental === sigAcc) return '';
+      const d = info.accidental;
+      const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+      const fs = Math.abs(d) > 1 ? 11 : 14;
+      return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+    }
+
+    if (unison) {
+      inner += accidentalGlyph(cx, yCf, cfInfo);
+      inner += cpNotehead(cx, yCf);
+      inner += cpStem(cx + 7, yCf, true);
+      inner += cpStem(cx - 7, yCf, false);
+    } else {
+      inner += accidentalGlyph(cfX, yCf, cfInfo);
+      inner += accidentalGlyph(cpX, yCp, cpInfo);
+      inner += cpNotehead(cfX, yCf);
+      inner += cpNotehead(cpX, yCp);
+      const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+      inner += cpStem(cfX + (cfStemUp ? 7 : -7), yCf, cfStemUp);
+      inner += cpStem(cpX + (cpStemUp ? 7 : -7), yCp, cpStemUp);
+    }
+
+    // interval-degree number (1=unison, 3=third, 8=octave, 10=tenth, ...)
+    const degree = Math.abs(stepCf - stepCp) + 1;
+    inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+
+    parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+  });
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+// generic notehead+stem+flags for an arbitrary duration (species 2/4 voices
+// can have different durations from each other, unlike species 1)
+function noteShapeMarkup(cx, y, duration, stemUp) {
+  const filled = duration < 8;
+  let m = `<ellipse cx="${cx}" cy="${y}" rx="8" ry="6" transform="rotate(-18 ${cx} ${y})" fill="${filled ? COLOR : '#d6dec2'}" stroke="${COLOR}" stroke-width="2"/>`;
+  if (duration >= 16) return m;
+  const dir = stemUp ? -1 : 1;
+  const sx = stemUp ? cx + 7 : cx - 7;
+  const ey = y + dir * STEM_LEN;
+  m += `<line x1="${sx}" y1="${y}" x2="${sx}" y2="${ey}" stroke="${COLOR}" stroke-width="2.5"/>`;
+  const flagCount = duration === 1 ? 2 : (duration === 2 ? 1 : 0);
+  for (let f = 0; f < flagCount; f++) {
+    const fy = ey + dir * (f * 12);
+    if (stemUp) m += `<polygon points="${sx},${fy} ${sx+11},${fy+7} ${sx},${fy+13}" fill="${COLOR}"/>`;
+    else m += `<polygon points="${sx},${fy} ${sx-11},${fy-7} ${sx},${fy-13}" fill="${COLOR}"/>`;
+  }
+  return m;
+}
+
+// 4th species (suspension) renderer: CP enters with a rest, then each note
+// ties into the next CF note via an arc. No music font is available for a
+// proper rest glyph, so the rest is shown as a short handwritten dash
+// (same Caveat font as the time signature) sitting on the middle line.
+function buildSuspensionSVGSplit(cf, prep, isSuspension, ts, mode, cfUnit, key) {
+  const cpUnit = Math.max(1, cfUnit / 2);
+  const m = cf.length;
+  const measure1Count = Math.floor(m / 2);
+  const upperIsCp = mode === 'above';
+  const numberY = yForStep(38) - 45;
+
+  const allSlots = [];
+  for (let k = 0; k < m; k++) { allSlots.push({ k, kind: k === 0 ? 'rest' : 'tie' }); allSlots.push({ k, kind: 'attack' }); }
+  const row1Idx = [], row2Idx = [];
+  allSlots.forEach((s, i) => { (s.k < measure1Count ? row1Idx : row2Idx).push(i); });
+
+  function drawLedgers(cx, step) {
+    let mk = '';
+    ledgerSteps(step).forEach(s => { mk += `<line x1="${cx-12}" y1="${yForStep(s)}" x2="${cx+12}" y2="${yForStep(s)}" stroke="${COLOR}" stroke-width="2"/>`; });
+    return mk;
+  }
+  function accidentalGlyph(cxPos, yPos, info) {
+    const sigAcc = keySignatureAccidental(info.letter, key);
+    if (info.accidental === sigAcc) return '';
+    const d = info.accidental;
+    const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+    return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${Math.abs(d)>1?11:14}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+  }
+
+  function buildRow(rowIdx, includeTimeSig) {
+    const headerParts = [];
+    const tsX = buildStaffHeader(headerParts, key);
+    const noteBaseX = includeTimeSig ? tsX + 35 : tsX + 10;
+    let x = noteBaseX;
+    const slotX = [];
+    let minStep = 30, maxStep = 38;
+    rowIdx.forEach(i => {
+      const s = allSlots[i];
+      const w = widthForUnits(cpUnit);
+      slotX.push(x + w / 2); x += w;
+      const cfStep = pitchInfoInKey(cf[s.k], key).diatonicStep;
+      minStep = Math.min(minStep, cfStep); maxStep = Math.max(maxStep, cfStep);
+      if (s.kind !== 'rest') {
+        const cpStep = pitchInfoInKey(prep[s.k], key).diatonicStep;
+        minStep = Math.min(minStep, cpStep); maxStep = Math.max(maxStep, cpStep);
+      }
+    });
+    const totalWidth = x + 40;
+    const staffRight = totalWidth - 30;
+    const parts = [];
+    for (let s = 30; s <= 38; s += 2) parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(s)}" x2="${staffRight}" y2="${yForStep(s)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+    parts.push(...headerParts);
+    if (includeTimeSig) parts.push(timeSignatureMarkup(tsX, ts));
+
+    let prevAttackX = null;
+    rowIdx.forEach((i, localI) => {
+      const s = allSlots[i];
+      const cx = slotX[localI];
+      const cfInfo = pitchInfoInKey(cf[s.k], key);
+      const stepCf = cfInfo.diatonicStep, yCf = yForStep(stepCf);
+      let inner = '';
+      if (s.kind === 'rest' || s.kind === 'tie') {
+        inner += drawLedgers(cx, stepCf) + accidentalGlyph(cx, yCf, cfInfo) + noteShapeMarkup(cx, yCf, cfUnit, !upperIsCp);
+        if (s.kind === 'rest') {
+          inner += `<text x="${cx}" y="${yCf + (upperIsCp ? -1 : 1) * 22}" font-size="28" font-weight="700" font-family="${TS_FONT}" fill="${COLOR}" text-anchor="middle">/</text>`;
+        } else {
+          const prevPrepInfo = pitchInfoInKey(prep[s.k - 1], key);
+          const stepCp = prevPrepInfo.diatonicStep, yCp = yForStep(stepCp);
+          let cpX = Math.abs(stepCf - stepCp) <= 1 ? cx + 10 : cx;
+          inner += drawLedgers(cpX, stepCp) + accidentalGlyph(cpX, yCp, prevPrepInfo) + noteShapeMarkup(cpX, yCp, cpUnit, upperIsCp);
+          if (prevAttackX !== null) {
+            const arcDir = upperIsCp ? -1 : 1;
+            inner += `<path d="M ${prevAttackX} ${yCp+arcDir*4} Q ${(prevAttackX+cpX)/2} ${yCp+arcDir*10} ${cpX} ${yCp+arcDir*4}" fill="none" stroke="${COLOR}" stroke-width="2"/>`;
+          }
+          inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${Math.abs(stepCf-stepCp)+1}</text>`;
+        }
+      } else {
+        const cpInfo = pitchInfoInKey(prep[s.k], key);
+        const stepCp = cpInfo.diatonicStep, yCp = yForStep(stepCp);
+        let cpX = Math.abs(stepCf - stepCp) <= 1 ? cx + 10 : cx;
+        inner += drawLedgers(cpX, stepCp) + accidentalGlyph(cpX, yCp, cpInfo) + noteShapeMarkup(cpX, yCp, cpUnit, upperIsCp);
+        prevAttackX = cpX;
+        inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${Math.abs(stepCf-stepCp)+1}</text>`;
+      }
+      parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+    });
+    return { parts, minStep, maxStep, width: totalWidth };
+  }
+
+  const row1 = buildRow(row1Idx, true);
+  const row2 = buildRow(row2Idx, false);
+  const row1TopY = Math.min(80, yForStep(row1.maxStep) - 30, numberY - 16);
+  const row1BottomY = Math.max(245, yForStep(row1.minStep) + 30);
+  const row2TopY = Math.min(80, yForStep(row2.maxStep) - 30, numberY - 16);
+  const row2BottomY = Math.max(245, yForStep(row2.minStep) + 30);
+  const row1Height = row1BottomY - row1TopY, row2Height = row2BottomY - row2TopY;
+  const GAP = 26;
+  const totalWidth = Math.max(row1.width, row2.width);
+  const out = [];
+  out.push(`<svg viewBox="0 0 ${totalWidth} ${row1Height + GAP + row2Height}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  out.push(`<g transform="translate(0, ${-row1TopY})">${row1.parts.join('\n')}</g>`);
+  out.push(`<g transform="translate(0, ${row1Height + GAP - row2TopY})">${row2.parts.join('\n')}</g>`);
+  out.push('</svg>');
+  return out.join('\n');
+}
+
+function buildSuspensionSVG(cf, prep, isSuspension, ts, mode, cfUnit, key) {
+  if (Math.max(1, cfUnit / 2) === 1) return buildSuspensionSVGSplit(cf, prep, isSuspension, ts, mode, cfUnit, key);
+  const headerParts = [];
+  const tsX = buildStaffHeader(headerParts, key);
+  const noteBaseX = tsX + 35;
+  const cpUnit = Math.max(1, cfUnit / 2);
+  const m = cf.length;
+  const measure1Count = Math.floor(m / 2);
+  const upperIsCp = mode === 'above';
+  const numberY = yForStep(38) - 45;
+
+  const slots = [];
+  for (let k = 0; k < m; k++) {
+    slots.push({ k, kind: k === 0 ? 'rest' : 'tie' });
+    slots.push({ k, kind: 'attack' });
+  }
+
+  let x = noteBaseX;
+  const slotX = [];
+  let minStep = 30, maxStep = 38;
+  let barlineAt = null;
+  slots.forEach(s => {
+    const w = widthForUnits(cpUnit);
+    slotX.push(x + w / 2);
+    x += w;
+    if (s.k === measure1Count - 1 && s.kind === 'attack') { barlineAt = x; x += 18; }
+    const cfStep = pitchInfoInKey(cf[s.k], key).diatonicStep;
+    minStep = Math.min(minStep, cfStep); maxStep = Math.max(maxStep, cfStep);
+    if (s.kind !== 'rest') {
+      const cpStep = pitchInfoInKey(prep[s.k], key).diatonicStep;
+      minStep = Math.min(minStep, cpStep); maxStep = Math.max(maxStep, cpStep);
+    }
+  });
+  const totalWidth = x + 40;
+  const staffRight = totalWidth - 30;
+  const topY = Math.min(80, yForStep(maxStep) - 30, numberY - 16);
+  const bottomY = Math.max(245, yForStep(minStep) + 30);
+
+  const parts = [];
+  parts.push(`<svg viewBox="0 ${topY} ${totalWidth} ${bottomY - topY}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  for (let s = 30; s <= 38; s += 2) {
+    const y = yForStep(s);
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+  }
+  parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+  parts.push(...headerParts);
+  parts.push(timeSignatureMarkup(tsX, ts));
+  if (barlineAt !== null) parts.push(`<line x1="${barlineAt}" y1="${yForStep(30)}" x2="${barlineAt}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+
+  function drawLedgers(cx, step) {
+    let mk = '';
+    ledgerSteps(step).forEach(s => {
+      const y = yForStep(s);
+      mk += `<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`;
+    });
+    return mk;
+  }
+  function accidentalGlyph(cxPos, yPos, info) {
+    const sigAcc = keySignatureAccidental(info.letter, key);
+    if (info.accidental === sigAcc) return '';
+    const d = info.accidental;
+    const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+    const fs = Math.abs(d) > 1 ? 11 : 14;
+    return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+  }
+
+  let prevAttackX = null;
+
+  slots.forEach((s, i) => {
+    const cx = slotX[i];
+    const cfInfo = pitchInfoInKey(cf[s.k], key);
+    const stepCf = cfInfo.diatonicStep, yCf = yForStep(stepCf);
+    let inner = '';
+
+    if (s.kind === 'rest' || s.kind === 'tie') {
+      inner += drawLedgers(cx, stepCf);
+      inner += accidentalGlyph(cx, yCf, cfInfo);
+      inner += noteShapeMarkup(cx, yCf, cfUnit, !upperIsCp);
+
+      if (s.kind === 'rest') {
+        const restY = yCf + (upperIsCp ? -1 : 1) * 22;
+        inner += `<text x="${cx}" y="${restY}" font-size="28" font-weight="700" font-family="${TS_FONT}" fill="${COLOR}" text-anchor="middle">/</text>`;
+      } else {
+        const prevPrepInfo = pitchInfoInKey(prep[s.k - 1], key);
+        const stepCp = prevPrepInfo.diatonicStep, yCp = yForStep(stepCp);
+        let cpX = cx;
+        if (Math.abs(stepCf - stepCp) <= 1) cpX = cx + 10;
+        inner += drawLedgers(cpX, stepCp);
+        inner += accidentalGlyph(cpX, yCp, prevPrepInfo);
+        inner += noteShapeMarkup(cpX, yCp, cpUnit, upperIsCp);
+        if (prevAttackX !== null) {
+          const midX = (prevAttackX + cpX) / 2;
+          const arcDir = upperIsCp ? -1 : 1;
+          const arcY = yCp + arcDir * 10;
+          inner += `<path d="M ${prevAttackX} ${yCp+arcDir*4} Q ${midX} ${arcY} ${cpX} ${yCp+arcDir*4}" fill="none" stroke="${COLOR}" stroke-width="2"/>`;
+        }
+        const degree = Math.abs(stepCf - stepCp) + 1;
+        inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+      }
+    } else {
+      const cpInfo = pitchInfoInKey(prep[s.k], key);
+      const stepCp = cpInfo.diatonicStep, yCp = yForStep(stepCp);
+      let cpX = cx;
+      if (Math.abs(stepCf - stepCp) <= 1) cpX = cx + 10;
+      inner += drawLedgers(cpX, stepCp);
+      inner += accidentalGlyph(cpX, yCp, cpInfo);
+      inner += noteShapeMarkup(cpX, yCp, cpUnit, upperIsCp);
+      prevAttackX = cpX;
+      const degree = Math.abs(stepCf - stepCp) + 1;
+      inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+    }
+
+    parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+  });
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+// Forced/simplified 3-voice display: all three voices squeezed onto one
+// staff (no grand staff yet). Bass always stems down; nudged further right
+// when it lands close to either other voice so noteheads stay distinguishable.
+function buildThreeVoiceForcedSVGSplit(cf, cp, bass, ts, mode, uniformDuration, key) {
+  const n = cf.length;
+  const measure1Count = n / 2;
+  const numberY = yForStep(38) - 45;
+  const OFFSET = 10;
+  const upperIsCp = mode === 'above';
+
+  function buildRow(rowIndices, includeTimeSig) {
+    const headerParts = [];
+    const tsX = buildStaffHeader(headerParts, key);
+    const noteBaseX = includeTimeSig ? tsX + 35 : tsX + 10;
+    let x = noteBaseX;
+    const slotX = [];
+    let minStep = 30, maxStep = 38;
+    rowIndices.forEach(i => {
+      const w = widthForUnits(uniformDuration);
+      slotX.push(x + w / 2);
+      x += w;
+      [cf[i], cp[i], bass[i]].forEach(p => {
+        const s = pitchInfoInKey(p, key).diatonicStep;
+        minStep = Math.min(minStep, s); maxStep = Math.max(maxStep, s);
+      });
+    });
+    const totalWidth = x + 40;
+    const staffRight = totalWidth - 30;
+
+    const parts = [];
+    for (let s = 30; s <= 38; s += 2) {
+      const y = yForStep(s);
+      parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+    }
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+    parts.push(...headerParts);
+    if (includeTimeSig) parts.push(timeSignatureMarkup(tsX, ts));
+
+    function drawLedgers(cx, step) {
+      let m = '';
+      ledgerSteps(step).forEach(s => {
+        const y = yForStep(s);
+        m += `<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`;
+      });
+      return m;
+    }
+    function accidentalGlyph(cxPos, yPos, info) {
+      const sigAcc = keySignatureAccidental(info.letter, key);
+      if (info.accidental === sigAcc) return '';
+      const d = info.accidental;
+      const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+      const fs = Math.abs(d) > 1 ? 11 : 14;
+      return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+    }
+
+    rowIndices.forEach((i, localI) => {
+      const cx = slotX[localI];
+      const cfInfo = pitchInfoInKey(cf[i], key), cpInfo = pitchInfoInKey(cp[i], key), bassInfo = pitchInfoInKey(bass[i], key);
+      const stepCf = cfInfo.diatonicStep, stepCp = cpInfo.diatonicStep, stepBass = bassInfo.diatonicStep;
+      const yCf = yForStep(stepCf), yCp = yForStep(stepCp), yBass = yForStep(stepBass);
+
+      const closeCfCp = Math.abs(stepCf - stepCp) <= 1;
+      let cfX = cx, cpX = cx;
+      if (closeCfCp) { if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET; }
+      const closeBassCf = Math.abs(stepBass - stepCf) <= 1;
+      const closeBassCp = Math.abs(stepBass - stepCp) <= 1;
+      let bassX = cx;
+      if (closeBassCf || closeBassCp) bassX = cx + 2 * OFFSET;
+
+      let inner = drawLedgers(cfX, stepCf) + drawLedgers(cpX, stepCp) + drawLedgers(bassX, stepBass);
+      inner += accidentalGlyph(cfX, yCf, cfInfo);
+      inner += accidentalGlyph(cpX, yCp, cpInfo);
+      inner += accidentalGlyph(bassX, yBass, bassInfo);
+      const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+      inner += noteShapeMarkup(cfX, yCf, uniformDuration, cfStemUp);
+      inner += noteShapeMarkup(cpX, yCp, uniformDuration, cpStemUp);
+      inner += noteShapeMarkup(bassX, yBass, uniformDuration, false);
+
+      const degree = Math.abs(stepCf - stepCp) + 1;
+      inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+      parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+    });
+
+    return { parts, minStep, maxStep, width: totalWidth };
+  }
+
+  const row1Indices = Array.from({ length: measure1Count }, (_, k) => k);
+  const row2Indices = Array.from({ length: n - measure1Count }, (_, k) => k + measure1Count);
+  const row1 = buildRow(row1Indices, true);
+  const row2 = buildRow(row2Indices, false);
+
+  const row1TopY = Math.min(80, yForStep(row1.maxStep) - 30, numberY - 16);
+  const row1BottomY = Math.max(245, yForStep(row1.minStep) + 30);
+  const row2TopY = Math.min(80, yForStep(row2.maxStep) - 30, numberY - 16);
+  const row2BottomY = Math.max(245, yForStep(row2.minStep) + 30);
+  const row1Height = row1BottomY - row1TopY;
+  const row2Height = row2BottomY - row2TopY;
+  const GAP = 26;
+  const totalWidth = Math.max(row1.width, row2.width);
+  const totalHeight = row1Height + GAP + row2Height;
+
+  const out = [];
+  out.push(`<svg viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  out.push(`<g transform="translate(0, ${-row1TopY})">${row1.parts.join('\n')}</g>`);
+  out.push(`<g transform="translate(0, ${row1Height + GAP - row2TopY})">${row2.parts.join('\n')}</g>`);
+  out.push('</svg>');
+  return out.join('\n');
+}
+
+function buildThreeVoiceForcedSVG(cf, cp, bass, ts, mode, uniformDuration, key) {
+  if (uniformDuration === 1) return buildThreeVoiceForcedSVGSplit(cf, cp, bass, ts, mode, uniformDuration, key);
+  const headerParts = [];
+  const tsX = buildStaffHeader(headerParts, key);
+  const noteBaseX = tsX + 35;
+  const n = cf.length;
+  const measure1Count = n / 2;
+
+  const parts = [];
+  let x = noteBaseX;
+  const positions = [];
+  let minStep = 30, maxStep = 38;
+  for (let i = 0; i < n; i++) {
+    const w = widthForUnits(uniformDuration);
+    positions.push({ i, cx: x + w / 2 });
+    x += w;
+    if (i === measure1Count - 1) { positions.push({ barlineAt: x }); x += 18; }
+    [cf[i], cp[i], bass[i]].forEach(p => {
+      const s = pitchInfoInKey(p, key).diatonicStep;
+      minStep = Math.min(minStep, s); maxStep = Math.max(maxStep, s);
+    });
+  }
+  const numberY = yForStep(38) - 45;
+  const totalWidth = x + 40;
+  const staffRight = totalWidth - 30;
+  const topY = Math.min(80, yForStep(maxStep) - 30, numberY - 16);
+  const bottomY = Math.max(245, yForStep(minStep) + 30);
+
+  parts.push(`<svg viewBox="0 ${topY} ${totalWidth} ${bottomY - topY}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  for (let s = 30; s <= 38; s += 2) {
+    const y = yForStep(s);
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+  }
+  parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+  parts.push(...headerParts);
+  parts.push(timeSignatureMarkup(tsX, ts));
+
+  function drawLedgers(cx, step) {
+    let m = '';
+    ledgerSteps(step).forEach(s => {
+      const y = yForStep(s);
+      m += `<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`;
+    });
+    return m;
+  }
+  function accidentalGlyph(cxPos, yPos, info) {
+    const sigAcc = keySignatureAccidental(info.letter, key);
+    if (info.accidental === sigAcc) return '';
+    const d = info.accidental;
+    const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+    const fs = Math.abs(d) > 1 ? 11 : 14;
+    return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+  }
+
+  const OFFSET = 10;
+  const upperIsCp = mode === 'above';
+
+  positions.forEach(p => {
+    if (p.barlineAt) {
+      parts.push(`<line x1="${p.barlineAt}" y1="${yForStep(30)}" x2="${p.barlineAt}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+      return;
+    }
+    const { i, cx } = p;
+    const cfInfo = pitchInfoInKey(cf[i], key), cpInfo = pitchInfoInKey(cp[i], key), bassInfo = pitchInfoInKey(bass[i], key);
+    const stepCf = cfInfo.diatonicStep, stepCp = cpInfo.diatonicStep, stepBass = bassInfo.diatonicStep;
+    const yCf = yForStep(stepCf), yCp = yForStep(stepCp), yBass = yForStep(stepBass);
+
+    const closeCfCp = Math.abs(stepCf - stepCp) <= 1;
+    let cfX = cx, cpX = cx;
+    if (closeCfCp) { if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET; }
+
+    const closeBassCf = Math.abs(stepBass - stepCf) <= 1;
+    const closeBassCp = Math.abs(stepBass - stepCp) <= 1;
+    let bassX = cx;
+    if (closeBassCf || closeBassCp) bassX = cx + 2 * OFFSET;
+
+    let inner = drawLedgers(cfX, stepCf) + drawLedgers(cpX, stepCp) + drawLedgers(bassX, stepBass);
+    inner += accidentalGlyph(cfX, yCf, cfInfo);
+    inner += accidentalGlyph(cpX, yCp, cpInfo);
+    inner += accidentalGlyph(bassX, yBass, bassInfo);
+    const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+    inner += noteShapeMarkup(cfX, yCf, uniformDuration, cfStemUp);
+    inner += noteShapeMarkup(cpX, yCp, uniformDuration, cpStemUp);
+    inner += noteShapeMarkup(bassX, yBass, uniformDuration, false); // bass: always stem down
+
+    const degree = Math.abs(stepCf - stepCp) + 1;
+    inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+
+    parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+  });
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+// When the counterpoint voice subdivides into 16th notes (very common with
+// 4:1, sometimes 2:1), squeezing both measures into one row gets unreadably
+// cramped. Split into two independent staff systems - one per measure -
+// each with its own clef/key signature (time signature only on the first,
+// per standard convention).
+function buildSpeciesSVGSplit(cf, cp, slots, ts, mode, cfUnit, N, key) {
+  const cpUnit = Math.max(1, cfUnit / N);
+  const totalUnits = measureUnits(ts);
+  const measure1NoteCount = totalUnits / cfUnit;
+  const numberY = yForStep(38) - 45;
+  const OFFSET = 10;
+  const upperIsCp = mode === 'above';
+
+  const row1Idx = [], row2Idx = [];
+  slots.forEach((s, i) => { (s.groupIdx < measure1NoteCount ? row1Idx : row2Idx).push(i); });
+
+  function buildRow(rowIdx, includeTimeSig) {
+    const headerParts = [];
+    const tsX = buildStaffHeader(headerParts, key);
+    const noteBaseX = includeTimeSig ? tsX + 35 : tsX + 10;
+    let x = noteBaseX;
+    const slotX = [];
+    let minStep = 30, maxStep = 38;
+    rowIdx.forEach(i => {
+      const s = slots[i];
+      const isFinalGroupSlot = (s.groupIdx === cf.length - 1);
+      const dur = isFinalGroupSlot ? cfUnit : cpUnit;
+      const w = widthForUnits(dur);
+      slotX.push(x + w / 2);
+      x += w;
+      const sCf = pitchInfoInKey(s.cfPitch, key).diatonicStep;
+      const sCp = pitchInfoInKey(cp[i], key).diatonicStep;
+      minStep = Math.min(minStep, sCf, sCp);
+      maxStep = Math.max(maxStep, sCf, sCp);
+    });
+    const totalWidth = x + 40;
+    const staffRight = totalWidth - 30;
+
+    const parts = [];
+    for (let s = 30; s <= 38; s += 2) {
+      const y = yForStep(s);
+      parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+    }
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+    parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+    parts.push(...headerParts);
+    if (includeTimeSig) parts.push(timeSignatureMarkup(tsX, ts));
+
+    function drawLedgers(cx, step) {
+      let m = '';
+      ledgerSteps(step).forEach(s => {
+        const y = yForStep(s);
+        m += `<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`;
+      });
+      return m;
+    }
+    function accidentalGlyph(cxPos, yPos, info) {
+      const sigAcc = keySignatureAccidental(info.letter, key);
+      if (info.accidental === sigAcc) return '';
+      const d = info.accidental;
+      const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+      const fs = Math.abs(d) > 1 ? 11 : 14;
+      return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+    }
+
+    rowIdx.forEach((i, localI) => {
+      const s = slots[i];
+      const isFinalGroupSlot = (s.groupIdx === cf.length - 1);
+      const isStrong = s.posInGroup === 0;
+      const cx = slotX[localI];
+      const cpInfo = pitchInfoInKey(cp[i], key);
+      const stepCp = cpInfo.diatonicStep, yCp = yForStep(stepCp);
+      const dur = isFinalGroupSlot ? cfUnit : cpUnit;
+      let inner = '';
+
+      if (isStrong) {
+        const cfInfo = pitchInfoInKey(s.cfPitch, key);
+        const stepCf = cfInfo.diatonicStep, yCf = yForStep(stepCf);
+        const closeInterval = Math.abs(stepCf - stepCp) <= 1;
+        let cfX = cx, cpX = cx;
+        if (closeInterval) { if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET; }
+        inner += drawLedgers(cfX, stepCf);
+        inner += drawLedgers(cpX, stepCp);
+        inner += accidentalGlyph(cfX, yCf, cfInfo);
+        inner += accidentalGlyph(cpX, yCp, cpInfo);
+        const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+        inner += noteShapeMarkup(cfX, yCf, cfUnit, cfStemUp);
+        inner += noteShapeMarkup(cpX, yCp, dur, cpStemUp);
+      } else {
+        inner += drawLedgers(cx, stepCp);
+        inner += accidentalGlyph(cx, yCp, cpInfo);
+        inner += noteShapeMarkup(cx, yCp, dur, upperIsCp);
+      }
+
+      const degree = Math.abs(pitchInfoInKey(s.cfPitch, key).diatonicStep - stepCp) + 1;
+      inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+      parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+    });
+
+    return { parts, minStep, maxStep, width: totalWidth };
+  }
+
+  const row1 = buildRow(row1Idx, true);
+  const row2 = buildRow(row2Idx, false);
+
+  const row1TopY = Math.min(80, yForStep(row1.maxStep) - 30, numberY - 16);
+  const row1BottomY = Math.max(245, yForStep(row1.minStep) + 30);
+  const row2TopY = Math.min(80, yForStep(row2.maxStep) - 30, numberY - 16);
+  const row2BottomY = Math.max(245, yForStep(row2.minStep) + 30);
+  const row1Height = row1BottomY - row1TopY;
+  const row2Height = row2BottomY - row2TopY;
+  const GAP = 26;
+  const totalWidth = Math.max(row1.width, row2.width);
+  const totalHeight = row1Height + GAP + row2Height;
+
+  const out = [];
+  out.push(`<svg viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  out.push(`<g transform="translate(0, ${-row1TopY})">${row1.parts.join('\n')}</g>`);
+  out.push(`<g transform="translate(0, ${row1Height + GAP - row2TopY})">${row2.parts.join('\n')}</g>`);
+  out.push('</svg>');
+  return out.join('\n');
+}
+
+function buildSpeciesSVG(cf, cp, slots, ts, mode, cfUnit, N, key) {
+  const cpUnitCheck = Math.max(1, cfUnit / N);
+  if (cpUnitCheck === 1) return buildSpeciesSVGSplit(cf, cp, slots, ts, mode, cfUnit, N, key);
+
+  const headerParts = [];
+  const tsX = buildStaffHeader(headerParts, key);
+  const noteBaseX = tsX + 35;
+  const cpUnit = Math.max(1, cfUnit / N);
+
+  const totalUnits = measureUnits(ts);
+  const measure1NoteCount = totalUnits / cfUnit;
+
+  const parts = [];
+  let x = noteBaseX;
+  const slotX = [];
+  let minStep = 30, maxStep = 38;
+  let barlineAt = null;
+
+  slots.forEach((s, i) => {
+    const isFinalGroupSlot = (s.groupIdx === cf.length - 1);
+    const dur = isFinalGroupSlot ? cfUnit : cpUnit;
+    const w = widthForUnits(dur);
+    slotX.push(x + w / 2);
+    x += w;
+    if (s.groupIdx === measure1NoteCount - 1 && (i === slots.length - 1 || slots[i+1].groupIdx !== s.groupIdx)) {
+      barlineAt = x; x += 18;
+    }
+    const sCf = pitchInfoInKey(s.cfPitch, key).diatonicStep;
+    const sCp = pitchInfoInKey(cp[i], key).diatonicStep;
+    minStep = Math.min(minStep, sCf, sCp);
+    maxStep = Math.max(maxStep, sCf, sCp);
+  });
+
+  const numberY = yForStep(38) - 45;
+  const totalWidth = x + 40;
+  const staffRight = totalWidth - 30;
+  const topY = Math.min(80, yForStep(maxStep) - 30, numberY - 16);
+  const bottomY = Math.max(245, yForStep(minStep) + 30);
+
+  parts.push(`<svg viewBox="0 ${topY} ${totalWidth} ${bottomY - topY}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`);
+  for (let s = 30; s <= 38; s += 2) {
+    const y = yForStep(s);
+    parts.push(`<line x1="${STAFF_LEFT}" y1="${y}" x2="${staffRight}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`);
+  }
+  parts.push(`<line x1="${STAFF_LEFT}" y1="${yForStep(30)}" x2="${STAFF_LEFT}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight-6}" y1="${yForStep(30)}" x2="${staffRight-6}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  parts.push(`<line x1="${staffRight}" y1="${yForStep(30)}" x2="${staffRight}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="4"/>`);
+  parts.push(...headerParts);
+  parts.push(timeSignatureMarkup(tsX, ts));
+  if (barlineAt !== null) {
+    parts.push(`<line x1="${barlineAt}" y1="${yForStep(30)}" x2="${barlineAt}" y2="${yForStep(38)}" stroke="${COLOR}" stroke-width="2"/>`);
+  }
+
+  function drawLedgers(cx, step) {
+    let m = '';
+    ledgerSteps(step).forEach(s => {
+      const y = yForStep(s);
+      m += `<line x1="${cx-12}" y1="${y}" x2="${cx+12}" y2="${y}" stroke="${COLOR}" stroke-width="2"/>`;
+    });
+    return m;
+  }
+  function accidentalGlyph(cxPos, yPos, info) {
+    const sigAcc = keySignatureAccidental(info.letter, key);
+    if (info.accidental === sigAcc) return '';
+    const d = info.accidental;
+    const sign = d === 0 ? '\u266E' : (d > 0 ? '\u266F'.repeat(d) : '\u266D'.repeat(-d));
+    const fs = Math.abs(d) > 1 ? 11 : 14;
+    return `<text x="${cxPos-17}" y="${yPos+6}" font-size="${fs}" fill="${COLOR}" text-anchor="middle">${sign}</text>`;
+  }
+
+  const OFFSET = 10;
+  const upperIsCp = mode === 'above';
+
+  slots.forEach((s, i) => {
+    const isFinalGroupSlot = (s.groupIdx === cf.length - 1);
+    const isStrong = s.posInGroup === 0;
+    const cx = slotX[i];
+    const cpInfo = pitchInfoInKey(cp[i], key);
+    const stepCp = cpInfo.diatonicStep, yCp = yForStep(stepCp);
+    const dur = isFinalGroupSlot ? cfUnit : cpUnit;
+    let inner = '';
+
+    if (isStrong) {
+      const cfInfo = pitchInfoInKey(s.cfPitch, key);
+      const stepCf = cfInfo.diatonicStep, yCf = yForStep(stepCf);
+      const closeInterval = Math.abs(stepCf - stepCp) <= 1;
+      let cfX = cx, cpX = cx;
+      if (closeInterval) { if (upperIsCp) cpX = cx + OFFSET; else cfX = cx + OFFSET; }
+
+      inner += drawLedgers(cfX, stepCf);
+      inner += drawLedgers(cpX, stepCp);
+      inner += accidentalGlyph(cfX, yCf, cfInfo);
+      inner += accidentalGlyph(cpX, yCp, cpInfo);
+      const cfStemUp = !upperIsCp, cpStemUp = upperIsCp;
+      inner += noteShapeMarkup(cfX, yCf, cfUnit, cfStemUp);
+      inner += noteShapeMarkup(cpX, yCp, dur, cpStemUp);
+    } else {
+      inner += drawLedgers(cx, stepCp);
+      inner += accidentalGlyph(cx, yCp, cpInfo);
+      inner += noteShapeMarkup(cx, yCp, dur, upperIsCp);
+    }
+
+    const degree = Math.abs(pitchInfoInKey(s.cfPitch, key).diatonicStep - stepCp) + 1;
+    inner += `<text x="${cx}" y="${numberY}" font-size="15" font-weight="bold" fill="${COLOR}" text-anchor="middle">${degree}</text>`;
+
+    parts.push(`<g id="evt-${i}" class="evt">${inner}</g>`);
+  });
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+
+function varLen(value) {
+  const bytes = [value & 0x7F];
+  value = Math.floor(value / 128);
+  while (value > 0) {
+    bytes.unshift((value & 0x7F) | 0x80);
+    value = Math.floor(value / 128);
+  }
+  return bytes;
+}
+function u32be(n) { return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]; }
+function u16be(n) { return [(n >>> 8) & 255, n & 255]; }
+function strBytes(s) { return Array.from(s).map(c => c.charCodeAt(0)); }
+function log2int(n) { let p = 0, v = n; while (v > 1) { v >>= 1; p++; } return p; }
+
+function buildMidiCounterpoint(cf, cp, ts, bpm, uniformDuration) {
+  const PPQ = 480;
+  const unitTicks = PPQ / 4;
+  const durTicks = uniformDuration * unitTicks;
+  const evs = [];
+  const name = 'Pikopiko Counterpoint (1:1)';
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x03, name.length, ...strBytes(name)] });
+  const usPerQuarter = Math.round(60000000 / bpm);
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x51, 0x03, (usPerQuarter>>>16)&255, (usPerQuarter>>>8)&255, usPerQuarter&255] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x58, 0x04, ts.num & 255, log2int(ts.den) & 255, 24, 8] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xC0, 0] }); // channel 0 (cantus firmus): Acoustic Grand Piano
+  evs.push({ tick: 0, priority: 0, bytes: [0xC1, 0] }); // channel 1 (counterpoint): Acoustic Grand Piano
+
+  let cursor = 0;
+  for (let i = 0; i < cf.length; i++) {
+    const cfNote = pitchInfo(cf[i]).midi, cpNote = pitchInfo(cp[i]).midi;
+    evs.push({ tick: cursor, priority: 2, bytes: [0x90, cfNote, 100] });
+    evs.push({ tick: cursor, priority: 2, bytes: [0x91, cpNote, 100] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x80, cfNote, 0] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x81, cpNote, 0] });
+    cursor += durTicks;
+  }
+
+  evs.sort((a, b) => (a.tick - b.tick) || (a.priority - b.priority));
+  const track = [];
+  let prevTick = 0;
+  evs.forEach(e => {
+    track.push(...varLen(e.tick - prevTick));
+    track.push(...e.bytes);
+    prevTick = e.tick;
+  });
+  track.push(...varLen(0), 0xFF, 0x2F, 0x00);
+
+  const header = [...strBytes('MThd'), ...u32be(6), ...u16be(0), ...u16be(1), ...u16be(PPQ)];
+  const trackChunk = [...strBytes('MTrk'), ...u32be(track.length), ...track];
+  return new Uint8Array([...header, ...trackChunk]);
+}
+
+function buildMidiThreeVoice(cf, cp, bass, ts, bpm, uniformDuration) {
+  const PPQ = 480;
+  const unitTicks = PPQ / 4;
+  const durTicks = uniformDuration * unitTicks;
+  const evs = [];
+  const name = 'Pikopiko Counterpoint (3-voice, simplified)';
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x03, name.length, ...strBytes(name)] });
+  const usPerQuarter = Math.round(60000000 / bpm);
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x51, 0x03, (usPerQuarter>>>16)&255, (usPerQuarter>>>8)&255, usPerQuarter&255] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x58, 0x04, ts.num & 255, log2int(ts.den) & 255, 24, 8] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xC0, 0] }); // channel 0 (cantus firmus): Piano
+  evs.push({ tick: 0, priority: 0, bytes: [0xC1, 0] }); // channel 1 (counterpoint): Piano
+  evs.push({ tick: 0, priority: 0, bytes: [0xC2, 0] }); // channel 2 (bass): Piano
+
+  let cursor = 0;
+  for (let i = 0; i < cf.length; i++) {
+    const cfNote = pitchInfo(cf[i]).midi, cpNote = pitchInfo(cp[i]).midi, bassNote = pitchInfo(bass[i]).midi;
+    evs.push({ tick: cursor, priority: 2, bytes: [0x90, cfNote, 100] });
+    evs.push({ tick: cursor, priority: 2, bytes: [0x91, cpNote, 100] });
+    evs.push({ tick: cursor, priority: 2, bytes: [0x92, bassNote, 100] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x80, cfNote, 0] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x81, cpNote, 0] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x82, bassNote, 0] });
+    cursor += durTicks;
+  }
+
+  evs.sort((a, b) => (a.tick - b.tick) || (a.priority - b.priority));
+  const track = [];
+  let prevTick = 0;
+  evs.forEach(e => {
+    track.push(...varLen(e.tick - prevTick));
+    track.push(...e.bytes);
+    prevTick = e.tick;
+  });
+  track.push(...varLen(0), 0xFF, 0x2F, 0x00);
+
+  const header2 = [...strBytes('MThd'), ...u32be(6), ...u16be(0), ...u16be(1), ...u16be(PPQ)];
+  const trackChunk2 = [...strBytes('MTrk'), ...u32be(track.length), ...track];
+  return new Uint8Array([...header2, ...trackChunk2]);
+}
+
+// Ties have no separate existence in MIDI/audio - a tied pair is just one
+// longer note. cpEvents merges each prep's own attack-slot with the
+// following tie-slot (except the last, which has no continuation); a
+// leading rest is included so the CP timeline still totals m*cfUnit.
+function flattenSuspensionForPlayback(cf, prep, cfUnit) {
+  const cpUnit = Math.max(1, cfUnit / 2);
+  const m = cf.length;
+  const cfEvents = cf.map(pitch => ({ pitch, units: cfUnit }));
+  const cpEvents = [{ pitch: null, units: cpUnit, isRest: true }];
+  for (let k = 0; k < m; k++) {
+    const units = (k === m - 1) ? cpUnit : 2 * cpUnit;
+    cpEvents.push({ pitch: prep[k], units, isRest: false });
+  }
+  return { cfEvents, cpEvents };
+}
+
+function buildMidiSuspension(cf, prep, ts, bpm, cfUnit) {
+  const { cfEvents, cpEvents } = flattenSuspensionForPlayback(cf, prep, cfUnit);
+  const PPQ = 480;
+  const unitTicks = PPQ / 4;
+  const evs = [];
+  const name = 'Pikopiko Counterpoint (4th species, suspension)';
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x03, name.length, ...strBytes(name)] });
+  const usPerQuarter = Math.round(60000000 / bpm);
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x51, 0x03, (usPerQuarter>>>16)&255, (usPerQuarter>>>8)&255, usPerQuarter&255] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x58, 0x04, ts.num & 255, log2int(ts.den) & 255, 24, 8] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xC0, 0] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xC1, 0] });
+
+  let cursor = 0;
+  cfEvents.forEach(e => {
+    const dt = e.units * unitTicks;
+    const midiNote = pitchInfo(e.pitch).midi;
+    evs.push({ tick: cursor, priority: 2, bytes: [0x90, midiNote, 100] });
+    evs.push({ tick: cursor + dt, priority: 1, bytes: [0x80, midiNote, 0] });
+    cursor += dt;
+  });
+  let cursor2 = 0;
+  cpEvents.forEach(e => {
+    const dt = e.units * unitTicks;
+    if (!e.isRest) {
+      const midiNote = pitchInfo(e.pitch).midi;
+      evs.push({ tick: cursor2, priority: 2, bytes: [0x91, midiNote, 100] });
+      evs.push({ tick: cursor2 + dt, priority: 1, bytes: [0x81, midiNote, 0] });
+    }
+    cursor2 += dt;
+  });
+
+  evs.sort((a, b) => (a.tick - b.tick) || (a.priority - b.priority));
+  const track = [];
+  let prevTick = 0;
+  evs.forEach(e => {
+    track.push(...varLen(e.tick - prevTick));
+    track.push(...e.bytes);
+    prevTick = e.tick;
+  });
+  track.push(...varLen(0), 0xFF, 0x2F, 0x00);
+
+  const header3 = [...strBytes('MThd'), ...u32be(6), ...u16be(0), ...u16be(1), ...u16be(PPQ)];
+  const trackChunk3 = [...strBytes('MTrk'), ...u32be(track.length), ...track];
+  return new Uint8Array([...header3, ...trackChunk3]);
+}
+
+function buildMidiSpecies(cfEvents, cpEvents, ts, bpm) {
+  const PPQ = 480;
+  const unitTicks = PPQ / 4;
+  const evs = [];
+  const name = 'Pikopiko Counterpoint (2:1/4:1)';
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x03, name.length, ...strBytes(name)] });
+  const usPerQuarter = Math.round(60000000 / bpm);
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x51, 0x03, (usPerQuarter>>>16)&255, (usPerQuarter>>>8)&255, usPerQuarter&255] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xFF, 0x58, 0x04, ts.num & 255, log2int(ts.den) & 255, 24, 8] });
+  evs.push({ tick: 0, priority: 0, bytes: [0xC0, 0] }); // channel 0 (cantus firmus): Acoustic Grand Piano
+  evs.push({ tick: 0, priority: 0, bytes: [0xC1, 0] }); // channel 1 (counterpoint): Acoustic Grand Piano
+
+  let cursor = 0;
+  cfEvents.forEach(e => {
+    const durTicks = e.units * unitTicks;
+    const midiNote = pitchInfo(e.pitch).midi;
+    evs.push({ tick: cursor, priority: 2, bytes: [0x90, midiNote, 100] });
+    evs.push({ tick: cursor + durTicks, priority: 1, bytes: [0x80, midiNote, 0] });
+    cursor += durTicks;
+  });
+  let cursor2 = 0;
+  cpEvents.forEach(e => {
+    const durTicks = e.units * unitTicks;
+    const midiNote = pitchInfo(e.pitch).midi;
+    evs.push({ tick: cursor2, priority: 2, bytes: [0x91, midiNote, 100] });
+    evs.push({ tick: cursor2 + durTicks, priority: 1, bytes: [0x81, midiNote, 0] });
+    cursor2 += durTicks;
+  });
+
+  evs.sort((a, b) => (a.tick - b.tick) || (a.priority - b.priority));
+  const track = [];
+  let prevTick = 0;
+  evs.forEach(e => {
+    track.push(...varLen(e.tick - prevTick));
+    track.push(...e.bytes);
+    prevTick = e.tick;
+  });
+  track.push(...varLen(0), 0xFF, 0x2F, 0x00);
+
+  const header = [...strBytes('MThd'), ...u32be(6), ...u16be(0), ...u16be(1), ...u16be(PPQ)];
+  const trackChunk = [...strBytes('MTrk'), ...u32be(track.length), ...track];
+  return new Uint8Array([...header, ...trackChunk]);
+}
+
+// ===================== app state & wiring =====================
+
+let ts = { num: 4, den: 4 };
+let key = makeKey(KEY_POOL[0]);
+let isCpChromatic = false;
+let cpCf = null, cpCp = null, cpDur = 4, cpPositionUsed = 'above';
+let cpN = 1;
+let cpSlots = null;
+let cpBassOn = false;
+let cpBass = null;
+let isSusMode = false;
+let cpSusCf = null, cpSusPrep = null, cpSusIsSuspension = null;
+let audioCtx = null;
+let masterGain = null;
+let pulseWave25 = null, pulseWave125 = null;
+let isPlaying = false;
+let scheduledOsc = [];
+let rafId = null;
+let endTimerId = null;
+let eventTimings = [];
+let playStartCtxTime = 0;
+let lastActiveIdx = -1;
+
+const staffEl = document.getElementById('staff');
+const playBtn = document.getElementById('playBtn');
+const randomBtn = document.getElementById('randomBtn');
+const midiBtn = document.getElementById('midiBtn');
+const ledEl = document.getElementById('led');
+const tempoInput = document.getElementById('tempo');
+const tempoVal = document.getElementById('tempoVal');
+const volumeInput = document.getElementById('volume');
+const volumeVal = document.getElementById('volumeVal');
+const cpChromaticChk = document.getElementById('cpChromatic');
+const cpSpeciesSel = document.getElementById('cpSpecies');
+const cpSpeciesRandomChk = document.getElementById('cpSpeciesRandom');
+const cpBassChk = document.getElementById('cpBass');
+const cpPositionRow = document.getElementById('cpPositionRow');
+const cpPositionButtons = document.querySelectorAll('#cpPositionRow .voice-btn');
+let loRangeIdx = indexFromOctavePc(3, 7);  // G3 (fixed; switches with bass mode below)
+let hiRangeIdx = indexFromOctavePc(5, 9); // A5
+const keySel = document.getElementById('keySel');
+const tsNumSel = document.getElementById('tsNum');
+const tsDenSel = document.getElementById('tsDen');
+const hintEl = document.getElementById('hint');
+
+// populate key select: all 12 major keys
+function refreshKeySelectLabels() {
+  const mode = document.querySelector('#keyModeRow .voice-btn.active').dataset.keymode;
+  const suffix = mode === 'minor' ? '短調' : '長調';
+  Array.from(keySel.options).forEach((opt, i) => {
+    const k = KEY_POOL[i];
+    opt.textContent = `${k.name} (${k.jpBase}${suffix})`;
+  });
+}
+
+(function populateKeySelect() {
+  KEY_POOL.forEach((k, i) => {
+    keySel.add(new Option(`${k.name} (${k.jpBase}長調)`, i));
+  });
+  keySel.value = 0; // C
+})();
+
+// populate numerator select 2..9
+(function populateTsNum() {
+  for (let n = 2; n <= 9; n++) tsNumSel.add(new Option(String(n), n));
+  tsNumSel.value = 4;
+})();
+
+function updateHint() {
+  const lo = pitchInfo(loRangeIdx).name;
+  const hi = pitchInfo(hiRangeIdx).name;
+  const keyLabel = `${key.name}(${key.jp})`;
+  const posLabel = cpPositionUsed === 'above' ? '新声部:上' : '新声部:下';
+  const scaleLabel = isCpChromatic ? 'クロマティック12音' : 'ダイアトニック7音';
+  const bassLabel = cpBassOn ? '／ +バス(簡易・1段強制表示)' : '';
+  const speciesLabel = isSusMode ? '対位法(第四種・掛留)' : `対位法(第${cpN===1?'一':cpN===2?'二':'三'}種・${cpN}:1)`;
+  hintEl.innerHTML = `${speciesLabel}／${posLabel}／${scaleLabel}${bassLabel} ／ キー <b>${keyLabel}</b> ／ 音域 <b>${lo}〜${hi}</b> ／ <b>${ts.num}/${ts.den}</b> 拍子・2小節`;
+}
+
+function applyCpSpeciesRandomState() {
+  cpSpeciesSel.disabled = cpSpeciesRandomChk.checked || cpBassChk.checked;
+}
+applyCpSpeciesRandomState();
+
+function applyCpBassState() {
+  const on = cpBassChk.checked;
+  cpSpeciesRandomChk.disabled = on;
+  applyCpSpeciesRandomState();
+  if (on) {
+    loRangeIdx = indexFromOctavePc(3, 4); // E3
+    hiRangeIdx = indexFromOctavePc(5, 9); // A5
+  } else {
+    loRangeIdx = indexFromOctavePc(3, 7); // G3
+    hiRangeIdx = indexFromOctavePc(5, 9); // A5
+  }
+}
+applyCpBassState();
+
+function render() {
+  if (isSusMode) {
+    staffEl.innerHTML = buildSuspensionSVG(cpSusCf, cpSusPrep, cpSusIsSuspension, ts, cpPositionUsed, cpDur, key);
+  } else if (cpBassOn) {
+    staffEl.innerHTML = buildThreeVoiceForcedSVG(cpCf, cpCp, cpBass, ts, cpPositionUsed, cpDur, key);
+  } else if (cpN === 1) {
+    staffEl.innerHTML = buildCounterpointSVG(cpCf, cpCp, ts, cpPositionUsed, cpDur, key);
+  } else {
+    staffEl.innerHTML = buildSpeciesSVG(cpCf, cpCp, cpSlots, ts, cpPositionUsed, cpDur, cpN, key);
+  }
+  updateHint();
+}
+
+function pickUniformDuration(units) {
+  const candidates = [1,2,4,8,16].filter(u => units % u === 0);
+  const nonTrivial = candidates.filter(u => u > 1);
+  const pool = nonTrivial.length ? nonTrivial : candidates;
+  return pool[randInt(pool.length)];
+}
+
+function generateAndRender() {
+  let loIdx = loRangeIdx;
+  let hiIdx = hiRangeIdx;
+  if (loIdx > hiIdx) { [loIdx, hiIdx] = [hiIdx, loIdx]; loRangeIdx = loIdx; hiRangeIdx = hiIdx; }
+
+  ts = { num: Number(tsNumSel.value), den: Number(tsDenSel.value) };
+  const keyMode = document.querySelector('#keyModeRow .voice-btn.active').dataset.keymode;
+  key = makeKey(KEY_POOL[Number(keySel.value)], keyMode);
+  cpBassOn = cpBassChk.checked;
+  isSusMode = false;
+
+  // counterpoint writing needs real melodic room; enforce a minimum octave
+  // span (any 12-semitone window always has exactly 7 diatonic notes, and
+  // obviously 12 chromatic ones). Bass writing is more constrained (consonant
+  // with two voices at once) so it gets a wider minimum to keep generation fast.
+  const minWidth = cpBassOn ? 24 : 12;
+  if (hiIdx - loIdx < minWidth) {
+    hiIdx = loIdx + minWidth;
+    const hiBound = indexFromOctavePc(7, 0);
+    if (hiIdx > hiBound) { hiIdx = hiBound; loIdx = hiIdx - minWidth; }
+    loRangeIdx = loIdx; hiRangeIdx = hiIdx;
+  }
+  isCpChromatic = cpChromaticChk.checked;
+  const candidateIdx = isCpChromatic
+    ? Array.from({ length: hiIdx - loIdx + 1 }, (_, k) => loIdx + k)
+    : diatonicIndicesInRange(loIdx, hiIdx, key);
+  const totalUnits = measureUnits(ts);
+  cpPositionUsed = document.querySelector('#cpPositionRow .voice-btn.active').dataset.pos;
+
+  if (cpBassOn) {
+    // simplified preview: bass is scoped to 1:1 species only for now
+    cpN = 1;
+    cpSpeciesSel.value = 1;
+    cpDur = pickUniformDuration(totalUnits);
+    const n = (totalUnits / cpDur) * 2;
+    const result = generateThreeVoices(n, candidateIdx, cpPositionUsed, key, 120);
+    if (result) {
+      cpCf = result.cf; cpCp = result.cp; cpBass = result.bass; cpSlots = null;
+    } else {
+      // exceedingly rare; fall back to a plain 2-voice result for this round
+      cpBassOn = false;
+      const fallback = generateFirstSpeciesCounterpoint(n, candidateIdx, cpPositionUsed, key, 50);
+      if (fallback) { cpCf = fallback.cf; cpCp = fallback.cp; cpSlots = null; }
+    }
+    render();
+    return;
+  }
+
+  const speciesChoices = [1, 2, 4, 'S4'];
+  const chosenSpecies = cpSpeciesRandomChk.checked ? speciesChoices[randInt(4)] : cpSpeciesSel.value;
+
+  if (chosenSpecies === 'S4') {
+    const cfCandidatesS4 = [2,4,8,16].filter(u => totalUnits % u === 0);
+    if (cfCandidatesS4.length) {
+      cpDur = cfCandidatesS4[randInt(cfCandidatesS4.length)];
+      const m = (totalUnits / cpDur) * 2;
+      const result = generateFourthSpecies(m, candidateIdx, cpPositionUsed, key, 60);
+      if (result) {
+        isSusMode = true;
+        cpSpeciesSel.value = 'S4';
+        cpSusCf = result.cf; cpSusPrep = result.prep; cpSusIsSuspension = result.isSuspension;
+        render();
+        return;
+      }
+    }
+  }
+
+  cpN = (chosenSpecies === 'S4') ? [1, 2, 4][randInt(3)] : Number(chosenSpecies);
+
+  if (cpN > 1) {
+    // N:1 species need a cantus-firmus note value that both divides the
+    // measure evenly AND splits evenly into N counterpoint notes. Some
+    // odd time-signature/denominator combinations have no such value
+    // (e.g. 3/8 with N=4) - fall back to species 1 cleanly rather than
+    // produce a fractional note count.
+    const cfCandidates = [1,2,4,8,16].filter(u => totalUnits % u === 0 && Number.isInteger(u / cpN));
+    if (!cfCandidates.length) cpN = 1;
+  }
+  cpSpeciesSel.value = cpN;
+
+  if (cpN === 1) {
+    cpDur = pickUniformDuration(totalUnits);
+    const n = (totalUnits / cpDur) * 2;
+    let result = generateFirstSpeciesCounterpoint(n, candidateIdx, cpPositionUsed, key, 50);
+    if (!result) result = generateFirstSpeciesCounterpoint(n, candidateIdx, cpPositionUsed, key, 50); // one more try, extremely unlikely to be needed
+    if (result) { cpCf = result.cf; cpCp = result.cp; cpSlots = null; }
+  } else {
+    const cfCandidates = [1,2,4,8,16].filter(u => totalUnits % u === 0 && Number.isInteger(u / cpN));
+    cpDur = cfCandidates[randInt(cfCandidates.length)];
+    const cfNoteCount = (totalUnits / cpDur) * 2;
+    let result = generateNSpeciesCounterpoint(cfNoteCount, cpN, candidateIdx, cpPositionUsed, key, 50);
+    if (!result) {
+      // fall back to species 1 rather than leave a stale piece on screen
+      cpN = 1;
+      cpSpeciesSel.value = 1;
+      cpDur = pickUniformDuration(totalUnits);
+      const n = (totalUnits / cpDur) * 2;
+      result = generateFirstSpeciesCounterpoint(n, candidateIdx, cpPositionUsed, key, 50);
+      if (result) cpSlots = null;
+    }
+    if (result) { cpCf = result.cf; cpCp = result.cp; if (cpN > 1) cpSlots = result.slots; }
+  }
+  render();
+}
+
+generateAndRender();
+
+function buildPulseWave(ctx, duty, harmonics) {
+  harmonics = harmonics || 32;
+  const real = new Float32Array(harmonics + 1);
+  const imag = new Float32Array(harmonics + 1);
+  for (let n = 1; n <= harmonics; n++) real[n] = (4 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
+  return ctx.createPeriodicWave(real, imag);
+}
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = Number(volumeInput.value) / 100;
+    masterGain.connect(audioCtx.destination);
+    // NES APU-style voices: pulse1 (25% duty) for the cantus firmus, pulse2
+    // (12.5% duty, thinner/buzzier) for the counterpoint voice so the two
+    // lines stay easy to tell apart by ear, triangle for the bass channel.
+    pulseWave25 = buildPulseWave(audioCtx, 0.25);
+    pulseWave125 = buildPulseWave(audioCtx, 0.125);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playOneNote(freq, startTime, dur, role) {
+  const osc = audioCtx.createOscillator();
+  if (role === 'bass') {
+    osc.type = 'triangle';
+  } else if (role === 'cp') {
+    osc.setPeriodicWave(pulseWave125);
+  } else {
+    osc.setPeriodicWave(pulseWave25);
+  }
+  osc.frequency.setValueAtTime(freq, startTime);
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0.0001, startTime);
+  g.gain.exponentialRampToValueAtTime(0.85, startTime + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+  osc.connect(g);
+  g.connect(masterGain);
+  osc.start(startTime);
+  osc.stop(startTime + dur + 0.02);
+  scheduledOsc.push(osc);
+}
+
+function setActive(idx) {
+  if (idx === lastActiveIdx) return;
+  if (lastActiveIdx >= 0) {
+    const prev = document.getElementById('evt-' + lastActiveIdx);
+    if (prev) prev.classList.remove('active');
+  }
+  if (idx >= 0) {
+    const cur = document.getElementById('evt-' + idx);
+    if (cur) cur.classList.add('active');
+  }
+  lastActiveIdx = idx;
+}
+
+function tick() {
+  if (!isPlaying) return;
+  const t = audioCtx.currentTime - playStartCtxTime;
+  let active = -1;
+  for (const e of eventTimings) {
+    if (t >= e.start && t < e.end) { active = e.idx; break; }
+  }
+  setActive(active);
+  rafId = requestAnimationFrame(tick);
+}
+
+function stop() {
+  isPlaying = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  if (endTimerId) clearTimeout(endTimerId);
+  endTimerId = null;
+  scheduledOsc.forEach(o => { try { o.stop(); } catch (e) {} });
+  scheduledOsc = [];
+  setActive(-1);
+  ledEl.classList.remove('on');
+  playBtn.classList.remove('playing');
+  playBtn.textContent = '▶ 再生';
+}
+
+function start() {
+  ensureAudio();
+  stop();
+  isPlaying = true;
+  ledEl.classList.add('on');
+  playBtn.classList.add('playing');
+  playBtn.textContent = '■ 停止';
+
+  const tempo = Number(tempoInput.value);
+  const unitSec = (60 / tempo) / 4;
+  const t0 = audioCtx.currentTime + 0.06;
+  playStartCtxTime = t0;
+  eventTimings = [];
+  let cursor = 0;
+
+  if (isSusMode) {
+    const cpu = cpDur * unitSec / 2; // cpUnit in seconds
+    // highlighting follows the 2-per-CF-note visual slots
+    for (let i = 0; i < cpSusCf.length * 2; i++) {
+      eventTimings.push({ start: cursor, end: cursor + cpu, idx: i });
+      cursor += cpu;
+    }
+    // audio: CF plays normally; CP plays merged (tied) notes, no retrigger
+    let cCf = 0;
+    cpSusCf.forEach(pitch => {
+      const dur = cpDur * unitSec;
+      playOneNote(pitchInfo(pitch).freq, t0 + cCf, dur * 0.92, 'cf');
+      cCf += dur;
+    });
+    const { cpEvents } = flattenSuspensionForPlayback(cpSusCf, cpSusPrep, cpDur);
+    let cCp = 0;
+    cpEvents.forEach(e => {
+      const dur = e.units * unitSec;
+      if (!e.isRest) playOneNote(pitchInfo(e.pitch).freq, t0 + cCp, dur * 0.92, 'cp');
+      cCp += dur;
+    });
+  } else if (cpBassOn) {
+    const dur = cpDur * unitSec;
+    for (let i = 0; i < cpCf.length; i++) {
+      eventTimings.push({ start: cursor, end: cursor + dur, idx: i });
+      playOneNote(pitchInfo(cpCf[i]).freq, t0 + cursor, dur * 0.92, 'cf');
+      playOneNote(pitchInfo(cpCp[i]).freq, t0 + cursor, dur * 0.92, 'cp');
+      playOneNote(pitchInfo(cpBass[i]).freq, t0 + cursor, dur * 0.92, 'bass');
+      cursor += dur;
+    }
+  } else if (cpN === 1) {
+    const dur = cpDur * unitSec;
+    for (let i = 0; i < cpCf.length; i++) {
+      eventTimings.push({ start: cursor, end: cursor + dur, idx: i });
+      playOneNote(pitchInfo(cpCf[i]).freq, t0 + cursor, dur * 0.92, 'cf');
+      playOneNote(pitchInfo(cpCp[i]).freq, t0 + cursor, dur * 0.92, 'cp');
+      cursor += dur;
+    }
+  } else {
+    const { cfEvents, cpEvents } = flattenSpeciesForPlayback(cpCf, cpSlots, cpCp, cpDur, cpN);
+    let cCf = 0;
+    cfEvents.forEach(e => {
+      const dur = e.units * unitSec;
+      playOneNote(pitchInfo(e.pitch).freq, t0 + cCf, dur * 0.92, 'cf');
+      cCf += dur;
+    });
+    let cCp = 0;
+    cpEvents.forEach((e, i) => {
+      const dur = e.units * unitSec;
+      eventTimings.push({ start: cCp, end: cCp + dur, idx: i });
+      playOneNote(pitchInfo(e.pitch).freq, t0 + cCp, dur * 0.92, 'cp');
+      cCp += dur;
+    });
+    cursor = cCp;
+  }
+
+  endTimerId = setTimeout(stop, (cursor + 0.2) * 1000);
+  rafId = requestAnimationFrame(tick);
+}
+
+randomBtn.addEventListener('click', () => {
+  stop();
+  generateAndRender();
+});
+
+playBtn.addEventListener('click', () => {
+  if (isPlaying) stop();
+  else start();
+});
+
+midiBtn.addEventListener('click', () => {
+  const bpm = Number(tempoInput.value);
+  let bytes;
+  if (isSusMode) {
+    bytes = buildMidiSuspension(cpSusCf, cpSusPrep, ts, bpm, cpDur);
+  } else if (cpBassOn) {
+    bytes = buildMidiThreeVoice(cpCf, cpCp, cpBass, ts, bpm, cpDur);
+  } else if (cpN === 1) {
+    bytes = buildMidiCounterpoint(cpCf, cpCp, ts, bpm, cpDur);
+  } else {
+    const { cfEvents, cpEvents } = flattenSpeciesForPlayback(cpCf, cpSlots, cpCp, cpDur, cpN);
+    bytes = buildMidiSpecies(cfEvents, cpEvents, ts, bpm);
+  }
+  const blob = new Blob([bytes], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = isSusMode
+    ? `pikopiko_4thspecies_${cpPositionUsed}_${ts.num}-${ts.den}.mid`
+    : cpBassOn
+    ? `pikopiko_3voice_${cpPositionUsed}_${ts.num}-${ts.den}.mid`
+    : `pikopiko_cp${cpN}-1_${cpPositionUsed}_${ts.num}-${ts.den}.mid`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+tempoInput.addEventListener('input', () => { tempoVal.textContent = tempoInput.value; });
+volumeInput.addEventListener('input', () => {
+  volumeVal.textContent = volumeInput.value;
+  if (masterGain) masterGain.gain.value = Number(volumeInput.value) / 100;
+});
+
+cpSpeciesRandomChk.addEventListener('change', applyCpSpeciesRandomState);
+cpBassChk.addEventListener('change', applyCpBassState);
+
+document.getElementById('settingsToggle').addEventListener('click', () => {
+  const body = document.getElementById('settingsBody');
+  const arrow = document.getElementById('settingsArrow');
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  arrow.textContent = collapsed ? '\u25BE' : '\u25B8';
+});
+
+document.querySelectorAll('#keyModeRow .voice-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#keyModeRow .voice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshKeySelectLabels();
+  });
+});
+
+cpPositionButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    cpPositionButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
+
